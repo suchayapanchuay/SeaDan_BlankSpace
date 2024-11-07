@@ -1,0 +1,16 @@
+# ignore virtual environments
+blankenv/
+
+# ignore python complied files
+*.pyc
+*.pyo
+
+# Ignore IDE/editor specific files
+.vscode/
+.idea/
+
+# Ignore log and temporary files
+*.log
+*.tmp
+*.swp
+*.json
