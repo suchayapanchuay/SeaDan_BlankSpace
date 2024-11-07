@@ -13,4 +13,8 @@ blankenv/
 *.log
 *.tmp
 *.swp
+
+# ingore run time foot print
 *.json
+*.png
+*.jpg
