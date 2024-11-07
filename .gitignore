@@ -1,6 +1,9 @@
 # ignore virtual environments
 blankenv/
 
+# ignore data set directory
+dataset/
+
 # ignore python complied files
 *.pyc
 *.pyo
