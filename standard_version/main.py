@@ -3,6 +3,11 @@ import open3d as o3d
 import numpy as np
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+import math
+from calculate_volume import calculate_grid_median_with_kdtree
+import multiprocessing
+import time
+import matplotlib.pyplot as plt
 
 def read_las_file(file_path):
     las = laspy.read(file_path)
@@ -88,7 +93,92 @@ def create_gui():
     start_viewer_btn = tk.Button(root, text="Start Visualization", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
     start_viewer_btn.pack(pady=20)
 
+    start_calculate_btn = tk.Button(root, text="Start Calculate Volume", command=lambda: start_calculate(pcd1, pcd2))
+    start_calculate_btn.pack(pady=20)
+
     root.mainloop()
+
+def start_calculate(src_pcd, target_pcd):
+    #Extract point coordinates
+    src_points = np.asarray(src_pcd.points)
+    tgt_points = np.asarray(target_pcd.points)
+
+    #Bounding box and drid setup
+    src_x_min, src_x_max = min(src_points[:, 0]), max(src_points[:, 0])
+    src_y_min, src_y_max = min(src_points[:, 1]), max(src_points[:, 1])
+    tgt_x_min, tgt_x_max = min(tgt_points[:, 0]), max(tgt_points[:, 0])
+    tgt_y_min, tgt_y_max = min(tgt_points[:, 1]), max(tgt_points[:, 1])
+
+    gbl_x_min, gbl_x_max = min(src_x_min, tgt_x_min), max(src_x_max, tgt_x_max)
+    gbl_y_min, gbl_y_max = min(src_y_min, tgt_y_min), max(src_y_max, tgt_y_max)
+
+    col_width = 1
+    row_width = 1
+
+    n_cols = math.ceil((gbl_x_max - gbl_x_min) / col_width)
+    n_rows = math.ceil((gbl_y_max - gbl_y_min) / row_width)
+
+    start_time = time.perf_counter()
+
+    # Prepare argument tuples for multiprocessing
+    src_args = (src_points, gbl_x_min, gbl_y_min, col_width, row_width, n_rows, n_cols)
+    tgt_args = (tgt_points, gbl_x_min, gbl_y_min, col_width, row_width, n_rows, n_cols)
+
+    if n_cols*n_rows < 1 :
+        # Use multiprocessing to calculate median altitudes for both source and target
+        with multiprocessing.Pool(processes = 4) as pool:
+            # starmap will unpack each tuple argument list correctly
+            results = pool.starmap(calculate_grid_median_with_kdtree, [src_args, tgt_args])
+        
+        # Unpack results
+        src_avg_alt_mat, count_point_src = results[0]
+        tgt_avg_alt_mat, count_point_tgt = results[1]
+        
+    else :
+
+        src_avg_alt_mat, count_point_src = calculate_grid_median_with_kdtree(src_points, gbl_x_min, gbl_y_min, col_width, row_width, n_rows, n_cols)
+        tgt_avg_alt_mat, count_point_tgt = calculate_grid_median_with_kdtree(tgt_points, gbl_x_min, gbl_y_min, col_width, row_width, n_rows, n_cols)
+
+    print(count_point_src)
+    print(count_point_tgt)
+
+    # Delta altitude matrix and volume change calculation
+    delta_alt_mat = tgt_avg_alt_mat - src_avg_alt_mat
+
+    cell_area = col_width * row_width
+    volume_change = (np.array(tgt_avg_alt_mat) - np.array(src_avg_alt_mat)) * cell_area
+
+    volume_change = np.nan_to_num(volume_change)
+    total_volume_change = np.sum(volume_change)
+    
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
+
+    # Plotting results
+    #fig = plt.figure()
+    fig, ax = plt.subplots()
+    im = ax.imshow(src_avg_alt_mat)
+    ax.set_title('Average Altitude (Source)')
+    ax.set_xlabel(f'{n_cols} columns')
+    ax.set_ylabel(f'{n_rows} rows')
+    plt.show()
+    
+    fig, ax = plt.subplots()
+    im = ax.imshow(tgt_avg_alt_mat)
+    ax.set_title('Average Altitude (Target)')
+    ax.set_xlabel(f'{n_cols} columns')
+    ax.set_ylabel(f'{n_rows} rows')
+    plt.show()
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(delta_alt_mat)
+    ax.set_title('Delta Altitude (Target - Source)')
+    ax.set_xlabel(f'{n_cols} columns')
+    ax.set_ylabel(f'{n_rows} rows')
+    plt.show()
+    
+    print(f'Total volume change: {total_volume_change:.10f} cubic units')
+    print(f"Elapsed time with KD-tree optimization: {elapsed_time:.4f} seconds")
 
 def start_viewer(pcd1, pcd2, step):
     if pcd1 is not None and pcd2 is not None:
@@ -153,16 +243,18 @@ def key_callback_1(vis, pcd1, matrix1, step):
     vis.register_key_callback(81, lambda vis: move_cloud(vis, pcd1, "forward", matrix1, step))  #Q
     vis.register_key_callback(69, lambda vis: move_cloud(vis, pcd1, "backward", matrix1, step)) #E
 
-# def key_callback_1(vis, pcd1, matrix1, step):
-#     vis.register_key_callback(263, lambda vis: move_cloud(vis, pcd1, "left", matrix1, step))     #left arrow
-#     vis.register_key_callback(262, lambda vis: move_cloud(vis, pcd1, "right", matrix1, step))    #right arrow
-#     vis.register_key_callback(265, lambda vis: move_cloud(vis, pcd1, "up", matrix1, step))       #up arrow
-#     vis.register_key_callback(264, lambda vis: move_cloud(vis, pcd1, "down", matrix1, step))     #down arrow
-#     vis.register_key_callback(88, lambda vis: rotate_cloud(vis, pcd1, "x"))                          #X
-#     vis.register_key_callback(89, lambda vis: rotate_cloud(vis, pcd1, "y"))                          #Y
-#     vis.register_key_callback(90, lambda vis: rotate_cloud(vis, pcd1, "z"))                          #Z
-#     vis.register_key_callback(81, lambda vis: move_cloud(vis, pcd1, "forward", matrix1, step))  #Q
-#     vis.register_key_callback(69, lambda vis: move_cloud(vis, pcd1, "backward", matrix1, step)) #E
+'''
+def key_callback_1(vis, pcd1, matrix1, step):
+    vis.register_key_callback(263, lambda vis: move_cloud(vis, pcd1, "left", matrix1, step))     #left arrow
+    vis.register_key_callback(262, lambda vis: move_cloud(vis, pcd1, "right", matrix1, step))    #right arrow
+    vis.register_key_callback(265, lambda vis: move_cloud(vis, pcd1, "up", matrix1, step))       #up arrow
+    vis.register_key_callback(264, lambda vis: move_cloud(vis, pcd1, "down", matrix1, step))     #down arrow
+    vis.register_key_callback(88, lambda vis: rotate_cloud(vis, pcd1, "x"))                          #X
+    vis.register_key_callback(89, lambda vis: rotate_cloud(vis, pcd1, "y"))                          #Y
+    vis.register_key_callback(90, lambda vis: rotate_cloud(vis, pcd1, "z"))                          #Z
+    vis.register_key_callback(81, lambda vis: move_cloud(vis, pcd1, "forward", matrix1, step))  #Q
+    vis.register_key_callback(69, lambda vis: move_cloud(vis, pcd1, "backward", matrix1, step)) #E
+'''
 
 def key_callback_2(vis, pcd2, matrix2, step):
     vis.register_key_callback(74, lambda vis: move_cloud(vis, pcd2, "left", matrix2, step))     #J
