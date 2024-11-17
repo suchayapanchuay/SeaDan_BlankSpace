@@ -39,7 +39,7 @@ def pickfile(sot):
 def create_gui():
     root = tk.Tk()
     root.title("Point Cloud Program")
-    root.geometry("400x300")
+    root.geometry("400x450")
     root.configure(bg='#F0F0F0')
     
     style = ttk.Style()
@@ -78,10 +78,10 @@ def create_gui():
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load file: {e}")
 
-    load_btn1 = tk.Button(root, text="Load Source 1", command=load_file1)
+    load_btn1 = tk.Button(root, text="Load Source", command=load_file1)
     load_btn1.pack(pady=10)
 
-    load_btn2 = tk.Button(root, text="Load Source 2", command=load_file2)
+    load_btn2 = tk.Button(root, text="Load Target", command=load_file2)
     load_btn2.pack(pady=10)
 
     step_label = tk.Label(root, text="Step value:")
@@ -89,12 +89,17 @@ def create_gui():
 
     step_entry = tk.Entry(root, textvariable=step_value)
     step_entry.pack(pady=5)
+    start_vis_source = tk.Button(root, text="Start Visualization Source", command=lambda: visualize_a_point_cloud(pcd1, "source"))
+    start_vis_target = tk.Button(root, text="Start Visualization Target", command=lambda: visualize_a_point_cloud(pcd2, "target"))
+    start_vis_source.pack(pady=20)
+    start_vis_target.pack(pady=20)
 
-    start_viewer_btn = tk.Button(root, text="Start Visualization", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
+    start_viewer_btn = tk.Button(root, text="Start visualize both datas", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
     start_viewer_btn.pack(pady=20)
 
     start_calculate_btn = tk.Button(root, text="Start Calculate Volume", command=lambda: start_calculate(pcd1, pcd2))
     start_calculate_btn.pack(pady=20)
+
 
     root.mainloop()
 
@@ -179,6 +184,12 @@ def start_calculate(src_pcd, target_pcd):
     
     print(f'Total volume change: {total_volume_change:.10f} cubic units')
     print(f"Elapsed time with KD-tree optimization: {elapsed_time:.4f} seconds")
+
+def visualize_a_point_cloud(pcd, title):
+    try:
+        o3d.visualization.draw_geometries([pcd], window_name=title)
+    except:
+        messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
 
 def start_viewer(pcd1, pcd2, step):
     if pcd1 is not None and pcd2 is not None:

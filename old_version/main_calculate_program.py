@@ -4,7 +4,7 @@ import numpy as np
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import math
-from calculate_volume import calculate_grid_median_with_kdtree
+from functions.calculate_volume import calculate_grid_median_with_kdtree
 import multiprocessing
 import time
 import matplotlib.pyplot as plt
@@ -38,9 +38,8 @@ def pickfile(sot):
 
 def create_gui():
     root = tk.Tk()
-    root.iconbitmap('./image/beach_3586.ico')
     root.title("Point Cloud Program")
-    root.geometry("400x450")
+    root.geometry("400x300")
     root.configure(bg='#F0F0F0')
     
     style = ttk.Style()
@@ -79,10 +78,10 @@ def create_gui():
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load file: {e}")
 
-    load_btn1 = tk.Button(root, text="Load Source", command=load_file1)
+    load_btn1 = tk.Button(root, text="Load Source 1", command=load_file1)
     load_btn1.pack(pady=10)
 
-    load_btn2 = tk.Button(root, text="Load Target", command=load_file2)
+    load_btn2 = tk.Button(root, text="Load Source 2", command=load_file2)
     load_btn2.pack(pady=10)
 
     step_label = tk.Label(root, text="Step value:")
@@ -90,17 +89,12 @@ def create_gui():
 
     step_entry = tk.Entry(root, textvariable=step_value)
     step_entry.pack(pady=5)
-    start_vis_source = tk.Button(root, text="Start Visualization Source", command=lambda: visualize_a_point_cloud(pcd1, "source"))
-    start_vis_target = tk.Button(root, text="Start Visualization Target", command=lambda: visualize_a_point_cloud(pcd2, "target"))
-    start_vis_source.pack(pady=20)
-    start_vis_target.pack(pady=20)
 
-    start_viewer_btn = tk.Button(root, text="Start visualize both datas", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
+    start_viewer_btn = tk.Button(root, text="Start Visualization", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
     start_viewer_btn.pack(pady=20)
 
     start_calculate_btn = tk.Button(root, text="Start Calculate Volume", command=lambda: start_calculate(pcd1, pcd2))
     start_calculate_btn.pack(pady=20)
-
 
     root.mainloop()
 
@@ -161,7 +155,6 @@ def start_calculate(src_pcd, target_pcd):
     elapsed_time = end_time - start_time
 
     # Plotting results
-    """
     #fig = plt.figure()
     fig, ax = plt.subplots()
     im = ax.imshow(src_avg_alt_mat)
@@ -183,45 +176,9 @@ def start_calculate(src_pcd, target_pcd):
     ax.set_xlabel(f'{n_cols} columns')
     ax.set_ylabel(f'{n_rows} rows')
     plt.show()
-    """
-    
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-
-    # ซ่อน subplot ที่ไม่ได้ใช้ (แถว 2 คอลัมน์ 2)
-    axes[1, 1].axis('off')
-
-    # Subplot 1: Average Altitude (Source)
-    im1 = axes[0, 0].imshow(src_avg_alt_mat)
-    axes[0, 0].set_title('Average Altitude (Source)')
-    axes[0, 0].set_xlabel(f'{n_cols} columns')
-    axes[0, 0].set_ylabel(f'{n_rows} rows')
-
-    # Subplot 2: Average Altitude (Target)
-    im2 = axes[0, 1].imshow(tgt_avg_alt_mat)
-    axes[0, 1].set_title('Average Altitude (Target)')
-    axes[0, 1].set_xlabel(f'{n_cols} columns')
-    axes[0, 1].set_ylabel(f'{n_rows} rows')
-
-    # Subplot 3: Delta Altitude (Target - Source)
-    im3 = axes[1, 0].imshow(delta_alt_mat)
-    axes[1, 0].set_title('Delta Altitude (Target - Source)')
-    axes[1, 0].set_xlabel(f'{n_cols} columns')
-    axes[1, 0].set_ylabel(f'{n_rows} rows')
-
-    # Adjust layout to prevent overlapping
-    plt.tight_layout()
-
-    # Show the combined plot
-    plt.show()
     
     print(f'Total volume change: {total_volume_change:.10f} cubic units')
     print(f"Elapsed time with KD-tree optimization: {elapsed_time:.4f} seconds")
-
-def visualize_a_point_cloud(pcd, title):
-    try:
-        o3d.visualization.draw_geometries([pcd], window_name=title)
-    except:
-        messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
 
 def start_viewer(pcd1, pcd2, step):
     if pcd1 is not None and pcd2 is not None:
