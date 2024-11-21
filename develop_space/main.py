@@ -40,7 +40,7 @@ def create_gui():
     root = tk.Tk()
     root.iconbitmap('./image/beach_3586.ico')
     root.title("SeaDan")
-    root.geometry("400x450")
+    root.geometry("400x500")
     root.configure(bg='#F0F0F0')
     
     style = ttk.Style()
@@ -101,8 +101,49 @@ def create_gui():
     start_calculate_btn = tk.Button(root, text="Start Calculate Volume", command=lambda: start_calculate(pcd1, pcd2))
     start_calculate_btn.pack(pady=20)
 
+    man_btn = tk.Button(root, text="Help", command=show_man)
+    man_btn.pack(pady=10)
+
 
     root.mainloop()
+
+def show_man():
+    data_man = {
+        'key_shortcut': ['A', 'D', 'W', 'S', 'X', 'Y', 'Z', 'Q', 'E'],
+        'description': ['Move point cloud to the left', 
+                        'Move point cloud to the right', 
+                        'Move point cloud forward', 
+                        'Move point cloud backward', 
+                        'Rotate the point cloud along the X axis.', 
+                        'Rotate the point cloud along the Y axis.', 
+                        'Rotate the point cloud along the Z axis.', 
+                        'Move pointcloud upper',
+                        'Move pointcloud lower']
+    }
+    
+    table_window = tk.Toplevel()
+    table_window.geometry("400x250")
+    table_window.title('Key button')
+    
+    
+    
+    columns = ('Key Shortcut', 'Description')
+    tree = ttk.Treeview(table_window, columns=columns, show='headings')
+    
+
+    tree.heading('Key Shortcut', text='Key Shortcut') 
+    tree.column('Key Shortcut', width=80, anchor='center')
+        
+    tree.heading('Description', text='Description')
+    tree.column('Description', width=200, anchor='w')
+    
+    keys = data_man['key_shortcut']
+    descriptions = data_man['description']
+    
+    for i in range(len(keys)):
+        tree.insert('', 'end', values=(keys[i], descriptions[i]))
+    
+    tree.pack(expand=True, fill='both', padx=10, pady=10)
 
 def start_calculate(src_pcd, target_pcd):
     #Extract point coordinates
