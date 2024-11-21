@@ -38,8 +38,7 @@ def pickfile(sot):
 
 def create_gui():
     root = tk.Tk()
-    root.iconbitmap('./image/beach_3586.ico')
-    root.title("SeaDan")
+    root.title("Point Cloud Program")
     root.geometry("400x450")
     root.configure(bg='#F0F0F0')
     
@@ -53,7 +52,7 @@ def create_gui():
 
     def load_file1():
         nonlocal pcd1  
-        file_path = pickfile("source")
+        file_path = pickfile("source 1")
         if file_path:
             try:
                 las_data, pcd = read_las_file(file_path)
@@ -67,7 +66,7 @@ def create_gui():
     
     def load_file2():
         nonlocal pcd2  
-        file_path = pickfile("target")
+        file_path = pickfile("source 2")
         if file_path:
             try:
                 las_data, pcd = read_las_file(file_path)
@@ -95,7 +94,7 @@ def create_gui():
     start_vis_source.pack(pady=20)
     start_vis_target.pack(pady=20)
 
-    start_viewer_btn = tk.Button(root, text="Start visualize & align", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
+    start_viewer_btn = tk.Button(root, text="Start visualize both datas", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
     start_viewer_btn.pack(pady=20)
 
     start_calculate_btn = tk.Button(root, text="Start Calculate Volume", command=lambda: start_calculate(pcd1, pcd2))
@@ -161,7 +160,6 @@ def start_calculate(src_pcd, target_pcd):
     elapsed_time = end_time - start_time
 
     # Plotting results
-    """
     #fig = plt.figure()
     fig, ax = plt.subplots()
     im = ax.imshow(src_avg_alt_mat)
@@ -182,36 +180,6 @@ def start_calculate(src_pcd, target_pcd):
     ax.set_title('Delta Altitude (Target - Source)')
     ax.set_xlabel(f'{n_cols} columns')
     ax.set_ylabel(f'{n_rows} rows')
-    plt.show()
-    """
-    
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-
-    # ซ่อน subplot ที่ไม่ได้ใช้ (แถว 2 คอลัมน์ 2)
-    axes[1, 1].axis('off')
-
-    # Subplot 1: Average Altitude (Source)
-    im1 = axes[0, 0].imshow(src_avg_alt_mat)
-    axes[0, 0].set_title('Average Altitude (Source)')
-    axes[0, 0].set_xlabel(f'{n_cols} columns')
-    axes[0, 0].set_ylabel(f'{n_rows} rows')
-
-    # Subplot 2: Average Altitude (Target)
-    im2 = axes[0, 1].imshow(tgt_avg_alt_mat)
-    axes[0, 1].set_title('Average Altitude (Target)')
-    axes[0, 1].set_xlabel(f'{n_cols} columns')
-    axes[0, 1].set_ylabel(f'{n_rows} rows')
-
-    # Subplot 3: Delta Altitude (Target - Source)
-    im3 = axes[1, 0].imshow(delta_alt_mat)
-    axes[1, 0].set_title('Delta Altitude (Target - Source)')
-    axes[1, 0].set_xlabel(f'{n_cols} columns')
-    axes[1, 0].set_ylabel(f'{n_rows} rows')
-
-    # Adjust layout to prevent overlapping
-    plt.tight_layout()
-
-    # Show the combined plot
     plt.show()
     
     print(f'Total volume change: {total_volume_change:.10f} cubic units')

@@ -4,6 +4,9 @@ blankenv/
 # ignore data set directory
 dataset/
 
+# ignore test directory
+testfolder/
+
 # ignore python complied files
 *.pyc
 *.pyo
