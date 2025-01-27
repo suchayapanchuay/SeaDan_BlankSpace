@@ -126,6 +126,9 @@ def create_gui():
     
     step_label = tk.Label(root, text="Step value", font=("Helvetica", 14,"bold"), bg="#F0C38E", fg="#0F2573")
     step_label.grid(row=4,pady=10, padx=5)
+    
+    transfrom_label = tk.Label(root, text="Transformation Metric", font=("Helvetica", 16,"bold"), bg='#FFF9F0', fg="#0F2573")
+    transfrom_label.grid(row=5, column=0, columnspan=2, pady=0, padx=20)
 
     step_entry = tk.Entry(root, textvariable=step_value)
     step_entry.grid(row=5 , pady=10, padx=5)
@@ -261,14 +264,21 @@ def create_gui():
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
-        stop_animation.set()      
+            
+        # Transformation Metrics (using ICP)
+        reg_icp = o3d.pipelines.registration.registration_icp(
+            src_pcd, target_pcd, 0.005, np.eye(4),
+            o3d.pipelines.registration.TransformationEstimationPointToPoint()
+        )
+        transformation_matrix = reg_icp.transformation
+        
+        stop_animation.set()  
         
         sand_increase = np.sum(delta_alt_mat[delta_alt_mat > 0.1] * cell_area)
         sand_decrease = np.sum(delta_alt_mat[delta_alt_mat < -0.1] * cell_area)
         
-        q.put((src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease, count_point_src, count_point_tgt, total_volume_change, elapsed_time))
-
-            
+        q.put((src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease, count_point_src, count_point_tgt, total_volume_change, elapsed_time,transformation_matrix))
+                
         def reset_gui():
             result_text.config(state=tk.NORMAL)
             result_text.delete(1.0, tk.END)
@@ -308,23 +318,21 @@ def create_gui():
                 graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=10, height=2)
                 graph.grid(row=10, pady=10, padx=5)
         
-        result_text = tk.Text(root, height=20, width=30, wrap="word", font=("Arial", 12))
-        result_text.grid(row=5, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
+        result_text = tk.Text(root, height=10, width=20, wrap="word", font=("Arial", 17,"bold"))
+        result_text.grid(row=6, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
 
         result_text.config(state=tk.NORMAL)
-        result_text.insert(tk.END, f"Transformation Metrics\nSource: {count_point_src}\nTarget: {count_point_tgt}\n"
-                      f"Total Volume Change: {total_volume_change:.2f} m³\nElapsed Time: {elapsed_time:.2f} seconds\n"
-                      f"Global Altitude Range: {gbl_z_min:.2f} to {gbl_z_max:.2f}")
+        result_text.insert(tk.END, f"\n{np.array2string(transformation_matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})}\n\n\n")
         result_text.config(state=tk.DISABLED)
-        copy_label = tk.Button(root, text="Copy", command=copy_to_clipboard, fg="blue", cursor="hand2", font=("Arial", 12))
-        copy_label.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
+        copy_label = tk.Button(root, text="Copy", command=copy_to_clipboard, fg="blue", cursor="hand2", width=5, height=2,font=("Arial", 13,"bold"))
+        copy_label.grid(row=8, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
         copy_label.bind("<Button-1>", copy_to_clipboard)
         #copy_button = tk.Button(root, text="Copy", command=copy_to_clipboard, width=5,height=1 )
         #copy_button.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
         result_text.bind("<Button-3>", copy_to_clipboard)
         
     
-        history_entry = (f"Transformation Metrics\nSource: {count_point_src}\nTarget: {count_point_tgt}\n"
+        history_entry = (f"Transformation Metrics\n\n{np.array2string(transformation_matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})}\n\n\n"
                       f"Total Volume Change: {total_volume_change:.2f} m³\nElapsed Time: {elapsed_time:.2f} seconds\n"
                       f"Global Altitude Range: {gbl_z_min:.2f} to {gbl_z_max:.2f}\n"
                       f"----------------------------------------------------------------------------------------------------------------------------------------------------")
@@ -332,7 +340,7 @@ def create_gui():
         print("History Entry Added:", history_entry)  # ตรวจสอบข้อมูลที่เพิ่มเข้าไป
 
         # เพิ่มปุ่ม "View History"
-        history_btn = tk.Button(root, text="View History", command=show_history, width=15, height=2, font=("Helvetica", 12))
+        history_btn = tk.Button(root, text="View More and History", command=show_history, width=17, height=2, font=("Helvetica", 12))
         history_btn.grid(row=10, rowspan=3,pady=10, padx=5)
         #history_btn.grid(row=11,pady=10, padx=5)
     
