@@ -24,3 +24,6 @@ testfolder/
 *.json
 *.png
 *.jpg
+
+!Main_Logo.png
+!Background.png
