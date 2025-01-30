@@ -402,7 +402,7 @@ def create_gui():
                 percentage_label.config(text=f"{i}%")
                 percentage_label.update()
             else:
-                percentage_label.config(text="Complete!")
+                percentage_label.config(text="Completed!")
                 root.update_idletasks()
         
     root.grid_columnconfigure(0, weight=1)
