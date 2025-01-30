@@ -45,7 +45,7 @@ def pickfile(sot):
 
 def create_gui():
     root = tk.Tk()
-    root.iconbitmap('/Users/suchayapanchuay/Documents/Project/blankspace/image/logo_pro.png')
+    #root.iconbitmap('/Users/suchayapanchuay/Documents/Project/blankspace/image/logo_pro.png')
     root.title("SeaDan")
     root.geometry("1000x1000")
     
