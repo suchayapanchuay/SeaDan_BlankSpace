@@ -45,7 +45,7 @@ def pickfile(sot):
 
 def create_gui():
     root = tk.Tk()
-    root.iconbitmap('/Users/suchayapanchuay/Documents/Project/blankspace/image/logo_pro.png')
+    #root.iconbitmap('/Users/suchayapanchuay/Documents/Project/blankspace/image/logo_pro.png')
     root.title("SeaDan")
     root.geometry("1000x1000")
     
@@ -119,27 +119,27 @@ def create_gui():
                 messagebox.showerror("Error", f"Failed to load file: {e}")
     
     load_btn1 = tk.Button(root, text="Load Time Series1", command=load_file1, width=20, height=2)
-    load_btn1.grid(row=2, column=0 ,columnspan=2, pady=10, padx=20, sticky="n")
+    load_btn1.grid(row=2, column=0 , pady=10, padx=10)
 
     load_btn2 = tk.Button(root, text="Load Time Series2", command=load_file2, width=20, height=2)
-    load_btn2.grid(row=3, column=0 ,columnspan=2, pady=10, padx=20, sticky="n")
+    load_btn2.grid(row=2, column=0, columnspan=2, pady=10)
     
     step_label = tk.Label(root, text="Step value", font=("Helvetica", 14,"bold"), bg="#F0C38E", fg="#0F2573")
-    step_label.grid(row=4,pady=10, padx=5)
+    step_label.grid(row=3,column=0, columnspan=2, pady=10)
     
-    transfrom_label = tk.Label(root, text="Transformation Metric", font=("Helvetica", 16,"bold"), bg='#FFF9F0', fg="#0F2573")
-    transfrom_label.grid(row=5, column=0, columnspan=2, pady=0, padx=20)
+    transfrom_label = tk.Label(root, text="Result Transformation Metric", font=("Helvetica", 16,"bold"), bg='#FFF9F0', fg="#0F2573")
+    transfrom_label.grid(row=8, column=0, columnspan=2, pady=0, padx=20)
 
     step_entry = tk.Entry(root, textvariable=step_value)
-    step_entry.grid(row=5 , pady=10, padx=5)
+    step_entry.grid(row=4,column=0, columnspan=2, pady=10)
 
     start_vis_source = tk.Button(root, text="Start Visualization Time Series1", command=lambda: visualize_a_point_cloud(pcd1, "source"),width=22, height=2)
     start_vis_target = tk.Button(root, text="Start Visualization Time Series2", command=lambda: visualize_a_point_cloud(pcd2, "target"),width=22, height=2)
     start_vis_source.grid(row=6,pady=10, padx=5)
-    start_vis_target.grid(row=7,pady=10, padx=5)
+    start_vis_target.grid(row=6,column=0, columnspan=2, pady=10)
 
     start_viewer_btn = tk.Button(root, text="Start Visualize & Align", command=lambda: start_viewer(pcd1, pcd2, step_value.get()),width=22, height=2)
-    start_viewer_btn.grid(row=8,pady=10, padx=5)
+    start_viewer_btn.grid(row=6, column=1, pady=10, padx=10)
 
     start_calculate_btn = tk.Button(root, text="Start Calculate Volume", command=lambda:[
             stop_animation.clear(),
@@ -148,27 +148,24 @@ def create_gui():
             start_progress(stop_animation)
             #threading.Thread(target=start_progress, args=(stop_animation)).start(),
         ],width=22, height=2)
-    start_calculate_btn.grid(row=9,pady=10, padx=5)
+    start_calculate_btn.grid(row=2, column=1, pady=10, padx=10)
     
-    result_label = tk.Label(root, text="Results will appear here.", font=("Helvetica", 14,"bold"), bg='#FFF9F0', fg="#187C19")
-    result_label.grid(row=10, column=0, columnspan=2, pady=0, padx=20)
+    #result_label = tk.Label(root, text="Results will appear here.", font=("Helvetica", 14,"bold"), bg='#FFF9F0', fg="#187C19")
+    #result_label.grid(row=12, column=0, columnspan=2, pady=0, padx=20)
 
-    man_btn = tk.Button(root, text="Help", command=show_man,width=8, height=2)
+    man_btn = tk.Button(root, text="User manual", command=show_man,width=22, height=2)
     #man_btn.grid(row=10, rowspan=3,pady=10, padx=5)
-    man_btn.grid(row=10,columnspan=2,rowspan=3, pady=80, padx=5, sticky="n")
+    man_btn.grid(row=7,column=0, columnspan=2, pady=10)
+    squear = tk.Canvas(root, width=200, height=200, bg="black")
+    squear.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
     
-    text_frame = tk.Label(root, text="Time Series1\n(ข้อมูลก่อนการเปลี่ยนแปลง)\n\nTime Series2\n(ข้อมูลหลังการเปลี่ยนแปลง)\n\nTime Series1 - Time Series2 = Volumn Change", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
-    text_frame.grid(row=2, column=1, rowspan=5, padx=(10,5), pady=10, sticky="n")
-    text_frame = tk.Label(root, text="Step Value Normal = 0.05 \n(ใช้เมื่อไฟล์มีขนาด มากกว่าKB แต่น้อยกว่า10MB)", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
-    text_frame.grid(row=5, column=1, rowspan=5, padx=(10,5), pady=10, sticky="n")
-    text_frame = tk.Label(root, text="Start Visualization Source \n(ดูเฉพาะไฟล์ Source)\n(ถ้าจะออกจากหน้านี้กด esc)", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
-    text_frame.grid(row=6, column=1, rowspan=5, padx=(10,5), pady=10, sticky="n")
-    text_frame = tk.Label(root, text="Start Visualization Target \n(ดูเฉพาะไฟล์ Target)\n(ถ้าจะออกจากหน้านี้กด esc)", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
-    text_frame.grid(row=7, column=1, rowspan=5, padx=(10,5), pady=10, sticky="n")
-    text_frame = tk.Label(root, text="Start Visualize & Align \n(ดูไฟล์ Source และ Target)", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
-    text_frame.grid(row=8, column=1, rowspan=5, padx=(10,5), pady=10, sticky="n")
-    text_frame = tk.Label(root, text="Start Calculate Volume \n (กราฟคำนวณปริมาตรการเปลี่ยนแปลง)", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
-    text_frame.grid(row=9, column=1, rowspan=5, padx=(10,5), pady=10, sticky="n")
+    text_frame = tk.Label(root, text="Time Series1\n(ข้อมูลก่อนการเปลี่ยนแปลง)\n\nTime Series2\n(ข้อมูลหลังการเปลี่ยนแปลง)\n\nTime Series1 - Time Series2 = Volumn Change\n\nStart Calculate Volume \n(เริ่มต้นการคำนวณ)\n\nStep Value Normal = 0.05 \n(ใช้เมื่อไฟล์มีขนาด มากกว่าKB แต่น้อยกว่า10MB)\n",
+                          font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
+    text_frame.grid(row=9, pady=10, rowspan=5,padx=5)
+    text_frame = tk.Label(root, text="    Start Visualization Time Series1    \n(ดูเฉพาะไฟล์ Time Series1)\n\n    Start Visualization Time Series2    \n(ดูเฉพาะไฟล์ Time Series2)\n\n  Start Visualize & Align  \n(ดูไฟล์ Time Series1 และ Time Series2)\n\n**ถ้าจะออกจากหน้านี้กด esc**", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
+    text_frame.grid(row=9, rowspan=5,column=1, pady=10, padx=10)
+    #text_frame = tk.Label(root, text="Start Visualize & Align \n(ดูไฟล์ Source และ Target)", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
+    #text_frame.grid(row=8, column=1, rowspan=5, padx=(10,5), pady=10, sticky="n")
     
     history_data = []  # ลิสต์สำหรับเก็บประวัติการคำนวณ
 
@@ -297,13 +294,15 @@ def create_gui():
             command=reset_gui, 
             width=6, 
             height=2, 
-            font=("Helvetica", 12, "bold"), 
+            font=("Helvetica", 13, "bold"), 
             bg="#FF6F61", 
             fg="#187C19"
         )
-        reset_btn.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
-        graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=10, height=2)
-        graph.grid(row=10, pady=10, padx=5)
+        reset_btn.grid(row=14,column=0, columnspan=2, rowspan=5, pady=5, padx=5, sticky="n")
+        graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
+        graph.grid(row=7, pady=10, padx=5)
+        view_all = tk.Button(root, text="View all",width=22, height=2)
+        view_all.grid(row=14,pady=10, padx=5)
         
         def copy_to_clipboard():
             text = result_text.get("1.0", tk.END).strip()  # ดึงข้อความทั้งหมดจาก Text widget
@@ -315,17 +314,17 @@ def create_gui():
             else:
                 messagebox.showwarning("Warning", "No text to copy!")
                 #   reset_btn.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
-                graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=10, height=2)
+                graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
                 graph.grid(row=10, pady=10, padx=5)
         
         result_text = tk.Text(root, height=10, width=20, wrap="word", font=("Arial", 17,"bold"))
-        result_text.grid(row=6, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
+        result_text.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
 
         result_text.config(state=tk.NORMAL)
         result_text.insert(tk.END, f"\n{np.array2string(transformation_matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})}\n\n\n")
         result_text.config(state=tk.DISABLED)
         copy_label = tk.Button(root, text="Copy", command=copy_to_clipboard, fg="blue", cursor="hand2", width=5, height=2,font=("Arial", 13,"bold"))
-        copy_label.grid(row=8, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
+        copy_label.grid(row=12 , column=0, columnspan=2, rowspan=5, pady=25, padx=5, sticky="n")
         copy_label.bind("<Button-1>", copy_to_clipboard)
         #copy_button = tk.Button(root, text="Copy", command=copy_to_clipboard, width=5,height=1 )
         #copy_button.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
@@ -340,8 +339,8 @@ def create_gui():
         print("History Entry Added:", history_entry)  # ตรวจสอบข้อมูลที่เพิ่มเข้าไป
 
         # เพิ่มปุ่ม "View History"
-        history_btn = tk.Button(root, text="View More and History", command=show_history, width=17, height=2, font=("Helvetica", 12))
-        history_btn.grid(row=10, rowspan=3,pady=10, padx=5)
+        history_btn = tk.Button(root, text="View More and History", command=show_history, width=22, height=2)
+        history_btn.grid(row=7, column=1, pady=10, padx=10)
         #history_btn.grid(row=11,pady=10, padx=5)
     
         return total_volume_change, reset_gui
@@ -395,14 +394,14 @@ def create_gui():
             total_tasks = 100
             for i in range(1,total_tasks + 1):
                 if stop_animation.is_set():
-                        percentage_label.config(text="Complete!")  # เปลี่ยนข้อความเป็น Completed
+                        percentage_label.config(text="Completed!")  # เปลี่ยนข้อความเป็น Completed
                         root.update_idletasks() 
                         return
                 time.sleep(0.05)
                 percentage_label.config(text=f"{i}%")
                 percentage_label.update()
             else:
-                percentage_label.config(text="Complete!")
+                percentage_label.config(text="Completed!")
                 root.update_idletasks()
         
     root.grid_columnconfigure(0, weight=1)
@@ -416,13 +415,13 @@ def create_gui():
         for img in ImageSequence.Iterator(dolphin_gif)
     ]
     dolphin_id = canvas.create_image(25, 35, anchor="center", image=dolphin_sequence[0])
-    canvas.grid(row=10,column=1, rowspan=3, padx=(10,5), pady=10, sticky="n")
+    canvas.place(relx=1.0, rely=1.0, anchor='se', x=-25, y=-30)
     
     #progress_bar = ttk.Progressbar(root, orient="horizontal", length=120, mode="determinate")
     #progress_bar.grid(row=10,column=1, rowspan=3, padx=(10,5), pady=90, sticky="n")
     
     percentage_label = tk.Label(root, text="0%")
-    percentage_label.grid(row=10,column=1, rowspan=3, padx=(10,5), pady=90, sticky="n")
+    percentage_label.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-10)
     #percentage_label.grid(row=10,column=1, rowspan=3, padx=(190,5), pady=90, sticky="n")
     
     #completion_label = tk.Label(root, text="")

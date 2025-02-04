@@ -13,6 +13,7 @@ from matplotlib.colors import Normalize
 from PIL import Image, ImageTk,ImageSequence
 import threading
 import queue
+from tkinter import Menu
 #import matplotlib.colors as mcolors
 
 
@@ -133,8 +134,8 @@ def create_gui():
     step_entry = tk.Entry(root, textvariable=step_value)
     step_entry.grid(row=4,column=0, columnspan=2, pady=10)
 
-    start_vis_source = tk.Button(root, text="Start Visualization Time Series1", command=lambda: visualize_a_point_cloud(pcd1, "source"),width=22, height=2)
-    start_vis_target = tk.Button(root, text="Start Visualization Time Series2", command=lambda: visualize_a_point_cloud(pcd2, "target"),width=22, height=2)
+    start_vis_source = tk.Button(root, text="Start Visualization Time Series1", command=lambda: visualize_a_point_cloud(pcd1, "Time Series1"),width=22, height=2)
+    start_vis_target = tk.Button(root, text="Start Visualization Time Series2", command=lambda: visualize_a_point_cloud(pcd2, "Time Series2"),width=22, height=2)
     start_vis_source.grid(row=6,pady=10, padx=5)
     start_vis_target.grid(row=6,column=0, columnspan=2, pady=10)
 
@@ -153,9 +154,9 @@ def create_gui():
     #result_label = tk.Label(root, text="Results will appear here.", font=("Helvetica", 14,"bold"), bg='#FFF9F0', fg="#187C19")
     #result_label.grid(row=12, column=0, columnspan=2, pady=0, padx=20)
 
-    man_btn = tk.Button(root, text="User manual", command=show_man,width=22, height=2)
+    man_btn = tk.Button(root, text="User manual", command=show_man,width=18, height=2)
     #man_btn.grid(row=10, rowspan=3,pady=10, padx=5)
-    man_btn.grid(row=7,column=0, columnspan=2, pady=10)
+    man_btn.grid(row=14,pady=10,padx=5)
     squear = tk.Canvas(root, width=200, height=200, bg="black")
     squear.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
     
@@ -274,7 +275,9 @@ def create_gui():
         sand_increase = np.sum(delta_alt_mat[delta_alt_mat > 0.1] * cell_area)
         sand_decrease = np.sum(delta_alt_mat[delta_alt_mat < -0.1] * cell_area)
         
-        q.put((src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease, count_point_src, count_point_tgt, total_volume_change, elapsed_time,transformation_matrix))
+        q = queue.Queue()
+        
+        q.put((src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease, count_point_src, count_point_tgt, total_volume_change, elapsed_time,transformation_matrix,step_value.get()))
                 
         def reset_gui():
             result_text.config(state=tk.NORMAL)
@@ -300,9 +303,77 @@ def create_gui():
         )
         reset_btn.grid(row=14,column=0, columnspan=2, rowspan=5, pady=5, padx=5, sticky="n")
         graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
-        graph.grid(row=7, pady=10, padx=5)
-        view_all = tk.Button(root, text="View all",width=22, height=2)
-        view_all.grid(row=14,pady=10, padx=5)
+        graph.grid(row=4, pady=10, padx=5,rowspan=2)
+          
+        view = tk.Button(root, text="Volumn Change",command=lambda:view_all(pcd1, pcd2, step_value.get()),width=22, height=2)
+        view.grid(row=7,column=1, pady=10, padx=10)
+        
+        ts1 = tk.Button(root, text="Time Series1",command=lambda:visualize_a_point_cloud(pcd1, "Time Series1",apply_cmap=True),width=22, height=2)
+        ts1.grid(row=7,pady=10, padx=5)
+        
+        ts2 = tk.Button(root, text="Time Series2",command=lambda:visualize_a_point_cloud(pcd2, "Time Series2",apply_cmap=True),width=22, height=2)
+        ts2.grid(row=7,column=0, columnspan=2, pady=10)
+        
+        #def view_all(pcd1, pcd2,title,step,apply_cmap=False,colormap_name='viridis_r'):
+        #    if pcd1 is not None and pcd2 is not None:
+        #        matrix1 = np.eye(4)
+        #        matrix2 = np.eye(4)
+        #        
+        #        translation_offset = np.array([-0.1,0.0,0.0])  
+        #        pcd1.translate(translation_offset)
+        #        original_colors_pcd1 = np.asarray(pcd1.colors).copy() if pcd1.colors else np.zeros_like(np.asarray(pcd1.points))
+        #        original_colors_pcd2 = np.asarray(pcd2.colors).copy() if pcd2.colors else np.zeros_like(np.asarray(pcd2.points))
+        #        if apply_cmap:
+        #            apply_colormap(pcd1, colormap_name)
+        #            apply_colormap(pcd2, colormap_name)
+        #            
+        #        o3d.visualization.draw_geometries([pcd1,pcd2], window_name=title)
+        #        
+        #        draw(pcd1, pcd2, matrix1, matrix2, step)
+        #        
+        #        pcd1.colors = o3d.utility.Vector3dVector(original_colors_pcd1)
+        #        pcd2.colors = o3d.utility.Vector3dVector(original_colors_pcd2)
+                
+        def view_all(pcd1, pcd2, step):
+            if pcd1 is not None and pcd2 is not None:
+                matrix1 = np.eye(4)
+                matrix2 = np.eye(4)
+                
+                translation_offset = np.array([-0.1,0.0,0.0])  
+                pcd1.translate(translation_offset)
+                
+                original_colors_pcd1 = np.asarray(pcd1.colors).copy()
+                original_colors_pcd2 = np.asarray(pcd2.colors).copy()
+                
+                pcd2.paint_uniform_color([1, 0, 0])  # สีแดง
+                pcd1.paint_uniform_color([0, 0, 1])  # สีน้ำเงิน
+                        
+                draw(pcd1, pcd2, matrix1, matrix2, step)
+                
+                pcd1.colors = o3d.utility.Vector3dVector(original_colors_pcd1)
+                pcd2.colors = o3d.utility.Vector3dVector(original_colors_pcd2)
+        
+        def apply_colormap(pcd, colormap_name='viridis_r'):
+            points = np.asarray(pcd.points)
+            z_values = points[:, 2]  # ใช้ค่า z เป็นเกณฑ์ในการแปลงสี
+            colormap = plt.get_cmap(colormap_name)
+            normalized_z = (z_values - np.min(z_values)) / (np.max(z_values) - np.min(z_values))
+            colors = colormap(normalized_z)[:, :3]  # เลือกเฉพาะค่า RGB
+            pcd.colors = o3d.utility.Vector3dVector(colors)
+                
+        def visualize_a_point_cloud(pcd, title,apply_cmap=False, colormap_name='viridis_r'):
+            try:
+                original_colors_pcd1 = np.asarray(pcd1.colors).copy() if pcd1.colors else np.zeros_like(np.asarray(pcd1.points))
+                original_colors_pcd2 = np.asarray(pcd2.colors).copy() if pcd2.colors else np.zeros_like(np.asarray(pcd2.points))
+                if apply_cmap:
+                    apply_colormap(pcd, colormap_name)
+                o3d.visualization.draw_geometries([pcd], window_name=title)
+                
+                pcd1.colors = o3d.utility.Vector3dVector(original_colors_pcd1)
+                pcd2.colors = o3d.utility.Vector3dVector(original_colors_pcd2)
+    
+            except:
+                messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
         
         def copy_to_clipboard():
             text = result_text.get("1.0", tk.END).strip()  # ดึงข้อความทั้งหมดจาก Text widget
@@ -315,7 +386,7 @@ def create_gui():
                 messagebox.showwarning("Warning", "No text to copy!")
                 #   reset_btn.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
                 graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
-                graph.grid(row=10, pady=10, padx=5)
+                graph.grid(row=4, pady=10, padx=5,rowspan=2)
         
         result_text = tk.Text(root, height=10, width=20, wrap="word", font=("Arial", 17,"bold"))
         result_text.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
@@ -340,7 +411,7 @@ def create_gui():
 
         # เพิ่มปุ่ม "View History"
         history_btn = tk.Button(root, text="View More and History", command=show_history, width=22, height=2)
-        history_btn.grid(row=7, column=1, pady=10, padx=10)
+        history_btn.grid(row=4, column=1, pady=10, padx=10,rowspan=2)
         #history_btn.grid(row=11,pady=10, padx=5)
     
         return total_volume_change, reset_gui
@@ -355,18 +426,21 @@ def create_gui():
         axes[0, 0].set_title('Average Altitude (Time Series1)')
         axes[0, 0].set_xlabel(f'Width {width_meters:.2f} meters')
         axes[0, 0].set_ylabel(f'Height {height_meters:.2f} meters')
+        axes[0, 0].invert_yaxis()
 
     # Subplot 2: Average Altitude (Target)
         im2 = axes[0, 1].imshow(tgt_avg_alt_mat, cmap='viridis_r', norm=norm)
         axes[0, 1].set_title('Average Altitude (Time Series2)')
         axes[0, 1].set_xlabel(f'Width {width_meters:.2f} meters')
         axes[0, 1].set_ylabel(f'Height {height_meters:.2f} meters')
+        axes[0, 1].invert_yaxis()
 
     # Subplot 3: Delta Altitude (Volume Change)
         im3 = axes[1, 0].imshow(delta_alt_mat, cmap='viridis_r', norm=norm)
         axes[1, 0].set_title('Delta Altitude (Volume Change)')
         axes[1, 0].set_xlabel(f'Width {width_meters:.2f} meters')
         axes[1, 0].set_ylabel(f'Height {height_meters:.2f} meters')
+        axes[1, 0].invert_yaxis()
 
     # Subplot 4: Period of change
         threshold_min = -0.1
@@ -376,6 +450,7 @@ def create_gui():
         axes[1, 1].set_title('Period of change')
         axes[1, 1].set_xlabel('Width (meters)')
         axes[1, 1].set_ylabel('Height (meters)')
+        axes[1, 1].invert_yaxis()
         axes[1, 1].text(0.5, -0.15, f'> 0.1 m : Sand Increase(Red)\n< -0.1 m : Sand Decrease(Blue)\n Sand Volume Increase: {sand_increase:.2f} m³\nSand Volume Decrease: {sand_decrease:.2f} m³',
             fontsize=12, ha='center', va='top', transform=axes[1, 1].transAxes)
 
@@ -387,8 +462,6 @@ def create_gui():
 
         plt.tight_layout()
         plt.show()
-        
-    q = queue.Queue()
     
     def start_progress(stop_animation):
             total_tasks = 100
@@ -403,7 +476,7 @@ def create_gui():
             else:
                 percentage_label.config(text="Completed!")
                 root.update_idletasks()
-        
+    
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
     
@@ -417,15 +490,8 @@ def create_gui():
     dolphin_id = canvas.create_image(25, 35, anchor="center", image=dolphin_sequence[0])
     canvas.place(relx=1.0, rely=1.0, anchor='se', x=-25, y=-30)
     
-    #progress_bar = ttk.Progressbar(root, orient="horizontal", length=120, mode="determinate")
-    #progress_bar.grid(row=10,column=1, rowspan=3, padx=(10,5), pady=90, sticky="n")
-    
     percentage_label = tk.Label(root, text="0%")
     percentage_label.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-10)
-    #percentage_label.grid(row=10,column=1, rowspan=3, padx=(190,5), pady=90, sticky="n")
-    
-    #completion_label = tk.Label(root, text="")
-    #completion_label.grid(row=3,pady=10, padx=5)
     
     stop_animation = threading.Event() 
 
@@ -434,8 +500,10 @@ def create_gui():
 def visualize_a_point_cloud(pcd, title):
     try:
         o3d.visualization.draw_geometries([pcd], window_name=title)
+        
     except:
         messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
+
 
 def start_viewer(pcd1, pcd2, step):
     if pcd1 is not None and pcd2 is not None:
@@ -545,7 +613,19 @@ def key_callback_2(vis, pcd2, matrix2, step):
     vis.register_key_callback(79, lambda vis: move_cloud(vis, pcd2, "forward", matrix2, step))  #O
     vis.register_key_callback(80, lambda vis: move_cloud(vis, pcd2, "backward", matrix2, step)) #P
 
+def draw(pcd1, pcd2, matrix1, matrix2, step):
+    vis = o3d.visualization.VisualizerWithKeyCallback()
+    vis.create_window()
 
+    vis.add_geometry(pcd1)
+    vis.add_geometry(pcd2)
+
+    key_callback_1(vis, pcd1, matrix1, step)
+    key_callback_2(vis, pcd2, matrix2, step)
+
+    vis.run()
+    vis.destroy_window()
+    
 def draw_interactive(pcd1, pcd2, matrix1, matrix2, step):
     vis = o3d.visualization.VisualizerWithKeyCallback()
     vis.create_window()
