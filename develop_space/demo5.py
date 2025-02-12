@@ -214,11 +214,11 @@ def create_gui():
         width_meters = gbl_x_max - gbl_x_min
         height_meters = gbl_y_max - gbl_y_min
 
-        col_width = 1.0  
-        row_width = 1.0  
+        #col_width = 1.0  
+        #row_width = 1.0  
         
-        #col_width = 0.1  
-        #row_width = 0.1 
+        col_width = 0.028
+        row_width = 0.028
 
         n_cols = math.ceil((gbl_x_max - gbl_x_min) / col_width)
         n_rows = math.ceil((gbl_y_max - gbl_y_min) / row_width)
@@ -276,7 +276,7 @@ def create_gui():
         
         q = queue.Queue()
         
-        q.put((src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease, count_point_src, count_point_tgt, total_volume_change, elapsed_time,transformation_matrix,step_value.get()))
+        q.put((src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease, count_point_src, count_point_tgt, total_volume_change, elapsed_time,transformation_matrix,step_value.get(),col_width, row_width))
                 
         def reset_gui():
             result_text.config(state=tk.NORMAL)
@@ -304,7 +304,7 @@ def create_gui():
         graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
         graph.grid(row=4, pady=10, padx=5,rowspan=2)
           
-        view = tk.Button(root, text="Volumn Change",command=lambda:view_all(pcd1, pcd2, step_value.get()),width=22, height=2)
+        view = tk.Button(root, text="Volume Change", command=lambda: view_all(pcd1, pcd2, step_value.get(), col_width, row_width), width=22, height=2)
         view.grid(row=7,column=1, pady=10, padx=10)
         
         ts1 = tk.Button(root, text="Time Series1",command=lambda:visualize_a_point_cloud(pcd1, "Time Series1",apply_cmap=True),width=22, height=2)
@@ -313,25 +313,55 @@ def create_gui():
         ts2 = tk.Button(root, text="Time Series2",command=lambda:visualize_a_point_cloud(pcd2, "Time Series2",apply_cmap=True),width=22, height=2)
         ts2.grid(row=7,column=0, columnspan=2, pady=10)
         
-        def view_all(pcd1, pcd2, step):
+
+        def view_all(pcd1, pcd2, step, col_width, row_width):
             if pcd1 is not None and pcd2 is not None:
                 matrix1 = np.eye(4)
                 matrix2 = np.eye(4)
                 
+            
                 translation_offset = np.array([-0.1,0.0,0.0])  
                 pcd1.translate(translation_offset)
+                #centroid_pcd1 = np.mean(np.asarray(pcd1.points), axis=0)
+                #centroid_pcd2 = np.mean(np.asarray(pcd2.points), axis=0)  
+                #translation_offset = centroid_pcd1 - centroid_pcd2
                 
                 original_colors_pcd1 = np.asarray(pcd1.colors).copy()
                 original_colors_pcd2 = np.asarray(pcd2.colors).copy()
                 
-                pcd2.paint_uniform_color([1, 0, 0])  # สีแดง
-                pcd1.paint_uniform_color([0, 0, 1])  # สีน้ำเงิน
-                        
-                draw(pcd1, pcd2, matrix1, matrix2, step)
+                # Apply the bwr color map
+                def apply_bwr_color(pcd):
+                    points = np.asarray(pcd.points)
+                    z_values = points[:, 2] 
+                    colormap = plt.get_cmap("viridis_r")
+                    normalized_z = (z_values - np.min(z_values)) / (np.max(z_values) - np.min(z_values))
+
+                    colors = colormap(normalized_z)[:, :3] 
+                    pcd.colors = o3d.utility.Vector3dVector(colors)
+                    
+                    delta_alt_mat = tgt_avg_alt_mat - src_avg_alt_mat
+                    cell_area = col_width * row_width
+                    volume_change = delta_alt_mat * cell_area
+                    volume_change = np.nan_to_num(volume_change)
+                    total_volume_change = np.sum(volume_change)
+                    threshold_max = 0.1
+                    threshold_min = -0.1
+                    sand_increase = np.sum(delta_alt_mat[delta_alt_mat > threshold_max] * cell_area)
+                    sand_decrease = np.sum(delta_alt_mat[delta_alt_mat < threshold_min] * cell_area)
                 
+                    print(f"Total Volume Change: {total_volume_change}")
+                    print(f"Sand Increase: {sand_increase}")
+                    print(f"Sand Decrease: {sand_decrease}")
+
+                apply_bwr_color(pcd1)
+                apply_bwr_color(pcd2)
+                draw_interactive(pcd1, pcd2, matrix1, matrix2, step)
                 pcd1.colors = o3d.utility.Vector3dVector(original_colors_pcd1)
                 pcd2.colors = o3d.utility.Vector3dVector(original_colors_pcd2)
         
+            else:
+                messagebox.showerror("Error", "Please load both files before starting the viewer.")
+
         def apply_colormap(pcd, colormap_name='viridis_r'):
             points = np.asarray(pcd.points)
             z_values = points[:, 2]  
