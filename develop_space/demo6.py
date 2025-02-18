@@ -13,6 +13,10 @@ from matplotlib.colors import Normalize
 from PIL import Image, ImageTk,ImageSequence
 import threading
 import queue
+from matplotlib import cm
+from scipy.spatial import cKDTree
+import copy
+import threading
 #import matplotlib.colors as mcolors
 
 
@@ -304,7 +308,7 @@ def create_gui():
         graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
         graph.grid(row=4, pady=10, padx=5,rowspan=2)
           
-        view = tk.Button(root, text="Volume Change", command=lambda: view_all(pcd1, pcd2, step_value.get(), col_width, row_width), width=22, height=2)
+        view = tk.Button(root, text="Volume Change", command=lambda: view_all(pcd1,pcd2), width=22, height=2)
         view.grid(row=7,column=1, pady=10, padx=10)
         
         ts1 = tk.Button(root, text="Time Series1",command=lambda:visualize_a_point_cloud(pcd1, "Time Series1",apply_cmap=True),width=22, height=2)
@@ -313,55 +317,38 @@ def create_gui():
         ts2 = tk.Button(root, text="Time Series2",command=lambda:visualize_a_point_cloud(pcd2, "Time Series2",apply_cmap=True),width=22, height=2)
         ts2.grid(row=7,column=0, columnspan=2, pady=10)
         
+        def view_all(pcd1, pcd2, threshold_min=-0.1, threshold_max=0.1):
+            pcd2_copy = copy.deepcopy(pcd2)
+            points1 = np.asarray(pcd1.points)
+            points2 = np.asarray(pcd2.points)
 
-        def view_all(pcd1, pcd2, step, col_width, row_width):
-            if pcd1 is not None and pcd2 is not None:
-                matrix1 = np.eye(4)
-                matrix2 = np.eye(4)
-                
-            
-                translation_offset = np.array([-0.1,0.0,0.0])  
-                pcd1.translate(translation_offset)
-                #centroid_pcd1 = np.mean(np.asarray(pcd1.points), axis=0)
-                #centroid_pcd2 = np.mean(np.asarray(pcd2.points), axis=0)  
-                #translation_offset = centroid_pcd1 - centroid_pcd2
-                
-                original_colors_pcd1 = np.asarray(pcd1.colors).copy()
-                original_colors_pcd2 = np.asarray(pcd2.colors).copy()
-                
-                # Apply the bwr color map
-                def apply_bwr_color(pcd):
-                    points = np.asarray(pcd.points)
-                    z_values = points[:, 2] 
-                    colormap = plt.get_cmap("viridis_r")
-                    normalized_z = (z_values - np.min(z_values)) / (np.max(z_values) - np.min(z_values))
+            # ใช้ KD-Tree เพื่อจับคู่จุดที่ใกล้ที่สุด
+            tree = cKDTree(points1[:, :2])  # ใช้แค่ (X, Y) ในการหาเพื่อนบ้าน
+            distances, indices = tree.query(points2[:, :2])  # ค้นหาจุดที่ใกล้ที่สุดใน pcd1
 
-                    colors = colormap(normalized_z)[:, :3] 
-                    pcd.colors = o3d.utility.Vector3dVector(colors)
-                    
-                    delta_alt_mat = tgt_avg_alt_mat - src_avg_alt_mat
-                    cell_area = col_width * row_width
-                    volume_change = delta_alt_mat * cell_area
-                    volume_change = np.nan_to_num(volume_change)
-                    total_volume_change = np.sum(volume_change)
-                    threshold_max = 0.1
-                    threshold_min = -0.1
-                    sand_increase = np.sum(delta_alt_mat[delta_alt_mat > threshold_max] * cell_area)
-                    sand_decrease = np.sum(delta_alt_mat[delta_alt_mat < threshold_min] * cell_area)
-                
-                    print(f"Total Volume Change: {total_volume_change}")
-                    print(f"Sand Increase: {sand_increase}")
-                    print(f"Sand Decrease: {sand_decrease}")
+            # กรองเฉพาะจุดที่มีการจับคู่ที่ดี (ค่าระยะทางต่ำ)
+            valid_mask = distances < 1.0  # ระยะห่างต้องไม่เกิน 1 เมตร (ปรับตามข้อมูลจริง)
 
-                apply_bwr_color(pcd1)
-                apply_bwr_color(pcd2)
-                draw_interactive(pcd1, pcd2, matrix1, matrix2, step)
-                pcd1.colors = o3d.utility.Vector3dVector(original_colors_pcd1)
-                pcd2.colors = o3d.utility.Vector3dVector(original_colors_pcd2)
+            matched_points1 = points1[indices[valid_mask]]  # จุดที่ถูกแมปจาก pcd1
+            matched_points2 = points2[valid_mask]  # จุดที่ถูกแมปจาก pcd2
+
+            # คำนวณ delta_alt จากค่า Z ที่จับคู่กัน
+            delta_alt = matched_points2[:, 2] - matched_points1[:, 2]
+
+            # Normalize ค่า delta_alt
+            norm1 = Normalize(vmin=threshold_min, vmax=threshold_max)
+            colormap = cm.get_cmap('bwr')  # ใช้สี blue-white-red
+            colors = colormap(norm1(delta_alt))[:, :3]  # ตัดค่า alpha ออก
+
+            # กำหนดสีให้ pcd2 เฉพาะจุดที่ถูกแมป
+            new_colors = np.zeros_like(points2)  # ค่า default คือดำ
+            new_colors[valid_mask] = colors  # ใช้สีที่คำนวณมาได้
+
+            pcd2_copy.colors = o3d.utility.Vector3dVector(new_colors)  # อัปเดตสีของ pcd2
+
+            # แสดงผลใน Open3D
+            o3d.visualization.draw_geometries([pcd2_copy])
         
-            else:
-                messagebox.showerror("Error", "Please load both files before starting the viewer.")
-
         def apply_colormap(pcd, colormap_name='viridis_r'):
             points = np.asarray(pcd.points)
             z_values = points[:, 2]  
@@ -476,7 +463,7 @@ def create_gui():
             total_tasks = 100
             for i in range(1,total_tasks + 1):
                 if stop_animation.is_set():
-                        percentage_label.config(text="Completed!")  # เปลี่ยนข้อความเป็น Completed
+                        percentage_label.config(text="Completed!") 
                         root.update_idletasks() 
                         return
                 time.sleep(0.05)
@@ -647,6 +634,8 @@ def draw_interactive(pcd1, pcd2, matrix1, matrix2, step):
 
     vis.run()
     vis.destroy_window()
+
+
 
 if __name__ == "__main__":
     create_gui()
