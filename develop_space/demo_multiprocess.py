@@ -319,36 +319,16 @@ def create_gui():
         ts2.grid(row=7,column=0, columnspan=2, pady=10)
         
         def view_all(pcd1, pcd2, threshold_min=-0.1, threshold_max=0.1):
-            pcd2_copy = copy.deepcopy(pcd2)
-            points1 = np.asarray(pcd1.points)
-            points2 = np.asarray(pcd2.points)
+                try:
+                    temp_file1 = "pcd1_volume.ply"
+                    temp_file2 = "pcd2_volume.ply"
 
-            # ใช้ KD-Tree เพื่อจับคู่จุดที่ใกล้ที่สุด
-            tree = cKDTree(points1[:, :2])  # ใช้แค่ (X, Y) ในการหาเพื่อนบ้าน
-            distances, indices = tree.query(points2[:, :2])  # ค้นหาจุดที่ใกล้ที่สุดใน pcd1
+                    o3d.io.write_point_cloud(temp_file1, pcd1)
+                    o3d.io.write_point_cloud(temp_file2, pcd2)
 
-            # กรองเฉพาะจุดที่มีการจับคู่ที่ดี (ค่าระยะทางต่ำ)
-            valid_mask = distances < 1.0  # ระยะห่างต้องไม่เกิน 1 เมตร (ปรับตามข้อมูลจริง)
-
-            matched_points1 = points1[indices[valid_mask]]  # จุดที่ถูกแมปจาก pcd1
-            matched_points2 = points2[valid_mask]  # จุดที่ถูกแมปจาก pcd2
-
-            # คำนวณ delta_alt จากค่า Z ที่จับคู่กัน
-            delta_alt = matched_points2[:, 2] - matched_points1[:, 2]
-
-            # Normalize ค่า delta_alt
-            norm1 = Normalize(vmin=threshold_min, vmax=threshold_max)
-            colormap = cm.get_cmap('bwr')  # ใช้สี blue-white-red
-            colors = colormap(norm1(delta_alt))[:, :3]  # ตัดค่า alpha ออก
-
-            # กำหนดสีให้ pcd2 เฉพาะจุดที่ถูกแมป
-            new_colors = np.zeros_like(points2)  # ค่า default คือดำ
-            new_colors[valid_mask] = colors  # ใช้สีที่คำนวณมาได้
-
-            pcd2_copy.colors = o3d.utility.Vector3dVector(new_colors)  # อัปเดตสีของ pcd2
-
-            # แสดงผลใน Open3D
-            o3d.visualization.draw_geometries([pcd2_copy])
+                    subprocess.Popen(["python", "visualize_volume.py", temp_file1, temp_file2, str(threshold_min), str(threshold_max)], start_new_session=True)
+                except:
+                    messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
         
         def apply_colormap(pcd, colormap_name='viridis_r'):
             points = np.asarray(pcd.points)
