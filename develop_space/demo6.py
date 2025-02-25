@@ -16,7 +16,6 @@ import queue
 from matplotlib import cm
 from scipy.spatial import cKDTree
 import copy
-import threading
 #import matplotlib.colors as mcolors
 
 
@@ -144,12 +143,14 @@ def create_gui():
 
     start_viewer_btn = tk.Button(root, text="Start Visualize & Align", command=lambda: start_viewer(pcd1, pcd2, step_value.get()),width=22, height=2)
     start_viewer_btn.grid(row=6, column=1, pady=10, padx=10)
+    
+    progress_queue = queue.Queue()
 
     start_calculate_btn = tk.Button(root, text="Start Calculate Volume", command=lambda:[
             stop_animation.clear(),
             threading.Thread(target=animate_gif, args=(canvas, dolphin_sequence, dolphin_id, stop_animation)).start(),
-            threading.Thread(target=start_calculate, args=(pcd1, pcd2)).start(),
-            start_progress(stop_animation)
+            threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue)).start(),
+            start_progress(stop_animation,progress_queue)
             #threading.Thread(target=start_progress, args=(stop_animation)).start(),
         ],width=22, height=2)
     start_calculate_btn.grid(row=2, column=1, pady=10, padx=10)
@@ -202,17 +203,34 @@ def create_gui():
         next_frame()
         
         
-    def start_calculate(src_pcd, target_pcd):
+    def start_calculate(src_pcd, target_pcd,progress_queue):
+        total_steps = 10
+        current_step = 0
+        
+        def update_progress():
+            nonlocal current_step
+            current_step += 1
+            percentage = int((current_step / total_steps) * 100)
+            progress_queue.put(percentage)
+            
+        update_progress()
+            
         src_points = np.asarray(src_pcd.points)
         tgt_points = np.asarray(target_pcd.points)
+        
+        update_progress()
 
         src_x_min, src_x_max = min(src_points[:, 0]), max(src_points[:, 0])
         src_y_min, src_y_max = min(src_points[:, 1]), max(src_points[:, 1])
         tgt_x_min, tgt_x_max = min(tgt_points[:, 0]), max(tgt_points[:, 0])
         tgt_y_min, tgt_y_max = min(tgt_points[:, 1]), max(tgt_points[:, 1])
+        
+        update_progress()
 
         gbl_x_min, gbl_x_max = min(src_x_min, tgt_x_min), max(src_x_max, tgt_x_max)
         gbl_y_min, gbl_y_max = min(src_y_min, tgt_y_min), max(src_y_max, tgt_y_max)
+        
+        update_progress()
 
     # Calculate the total width and height in meters
         width_meters = gbl_x_max - gbl_x_min
@@ -228,6 +246,8 @@ def create_gui():
         n_rows = math.ceil((gbl_y_max - gbl_y_min) / row_width)
 
         start_time = time.perf_counter()
+        
+        update_progress()
 
         src_args = (src_points, gbl_x_min, gbl_y_min, col_width, row_width, n_rows, n_cols)
         tgt_args = (tgt_points, gbl_x_min, gbl_y_min, col_width, row_width, n_rows, n_cols)
@@ -238,6 +258,8 @@ def create_gui():
     # คำนวณ Global Altitude Range
         gbl_z_min = min(src_z_min, tgt_z_min)  # ความสูงต่ำสุด
         gbl_z_max = max(src_z_max, tgt_z_max)  # ความสูงสูงสุด
+        
+        update_progress()
 
         if n_cols * n_rows < 1:
         # Use multiprocessing to calculate median altitudes for both source and target
@@ -254,10 +276,14 @@ def create_gui():
 
         print(count_point_src)
         print(count_point_tgt)
+        
+        update_progress()
 
     # Delta altitude matrix and volume change calculation
         delta_alt_mat = tgt_avg_alt_mat - src_avg_alt_mat
         cell_area = col_width * row_width
+        
+        update_progress()
 
         volume_change = delta_alt_mat * cell_area
         volume_change = np.nan_to_num(volume_change)
@@ -265,6 +291,7 @@ def create_gui():
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
+        update_progress()
             
         # Transformation Metrics (using ICP)
         reg_icp = o3d.pipelines.registration.registration_icp(
@@ -272,6 +299,8 @@ def create_gui():
             o3d.pipelines.registration.TransformationEstimationPointToPoint()
         )
         transformation_matrix = reg_icp.transformation
+        
+        update_progress()
         
         stop_animation.set()  
         
@@ -459,19 +488,18 @@ def create_gui():
         plt.tight_layout()
         plt.show()
     
-    def start_progress(stop_animation):
-            total_tasks = 100
-            for i in range(1,total_tasks + 1):
-                if stop_animation.is_set():
-                        percentage_label.config(text="Completed!") 
-                        root.update_idletasks() 
-                        return
-                time.sleep(0.05)
-                percentage_label.config(text=f"{i}%")
+    def start_progress(stop_animation,progress_queue):
+        def update_progress():
+            if not progress_queue.empty():
+                percentage = progress_queue.get()
+                percentage_label.config(text=f"{percentage}%")
                 percentage_label.update()
+            if not stop_animation.is_set():  
+                root.after(100, update_progress)  # อัปเดตทุก 100ms
             else:
-                percentage_label.config(text="Completed!")
-                root.update_idletasks()
+                percentage_label.config(text="Completed!")  
+
+        update_progress()
     
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
@@ -634,8 +662,6 @@ def draw_interactive(pcd1, pcd2, matrix1, matrix2, step):
 
     vis.run()
     vis.destroy_window()
-
-
 
 if __name__ == "__main__":
     create_gui()
