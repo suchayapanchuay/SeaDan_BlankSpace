@@ -16,7 +16,10 @@ import queue
 from matplotlib import cm
 from scipy.spatial import cKDTree
 import copy
+import threading
+import subprocess
 #import matplotlib.colors as mcolors
+#new
 
 
 def read_las_file(file_path):
@@ -25,7 +28,6 @@ def read_las_file(file_path):
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
     return las, pcd
-
 
 def las2Array(lasdata):
     points = np.vstack((lasdata.x, lasdata.y, lasdata.z)).transpose()
@@ -51,21 +53,22 @@ def create_gui():
     root = tk.Tk()
     #root.iconbitmap('/Users/suchayapanchuay/Documents/Project/blankspace/image/logo_pro.png')
     root.title("SeaDan")
-    root.geometry("1000x1000")
+    root.geometry("2000x2000")
     
-    bg_image = Image.open('/Users/suchayapanchuay/Documents/Project/blankspace/image/Background.jpg')
-    bg_image = bg_image.resize((1000, 1000))  # ปรับขนาดรูปภาพให้พอดีกับหน้าต่าง
+    
+    bg_image = Image.open('./blankspace/image/Background.jpg')
+    bg_image = bg_image.resize((2000, 2000))  # ปรับขนาดรูปภาพให้พอดีกับหน้าต่าง
     bg_photo = ImageTk.PhotoImage(bg_image)
     
     bg_label = tk.Label(root, image=bg_photo)
     bg_label.place(relwidth=1, relheight=1)
  
-    image = Image.open('/Users/suchayapanchuay/Documents/Project/blankspace/image/Main_Logo.png')  
+    image = Image.open('./blankspace/image/Main_Logo.png')  
     image = image.resize((100, 100))  # ปรับขนาดรูปภาพ
     photo = ImageTk.PhotoImage(image)
     
     header_frame = tk.Frame(root, bg="#FFF9F0")
-    header_frame.place(relx=0.5, rely=0.07, anchor="center", width=1000, height=185) 
+    header_frame.place(relx=0.5, rely=0.07, anchor="center", width=2000, height=185) 
     
     image_label = tk.Label(root, image=photo,bg='#FFF9F0') #bg='#ADE1FB'
     image_label.image = photo  # เก็บอ้างอิงรูปภาพเพื่อไม่ให้ถูกลบ
@@ -96,10 +99,14 @@ def create_gui():
                 pcd1 = pcd
                 last_loaded_file1 = file_path  
                 load_btn1.config(fg="green")  
+                file_label1.config(text=f"✅ Loaded: {file_path.split('/')[-1]}")
                 messagebox.showinfo("Success", "File 1 loaded successfully!")
+                
+                progress_bar.grid_forget()
             except Exception as e:
                 load_btn1.config(fg="red")  
                 messagebox.showerror("Error", f"Failed to load file: {e}")
+                progress_bar.grid_forget()
 
     def load_file2():
         nonlocal pcd2,last_loaded_file2
@@ -110,23 +117,35 @@ def create_gui():
                 return
 
             try:
+
                 las_data, pcd = read_las_file(file_path)
                 points, colors = las2Array(las_data)
                 pcd.points = o3d.utility.Vector3dVector(points)
                 pcd.colors = o3d.utility.Vector3dVector(colors)
                 pcd2 = pcd
                 last_loaded_file2 = file_path  
-                load_btn2.config(fg="green",font=("bold"))  
+                load_btn2.config(fg="green",font=("bold"))
+                file_label2.config(text=f"✅ Loaded: {file_path.split('/')[-1]}")  
                 messagebox.showinfo("Success", "File 2 loaded successfully!")
+                progress_bar.grid_forget()
             except Exception as e:
                 load_btn2.config(fg="red",font=("bold")) 
                 messagebox.showerror("Error", f"Failed to load file: {e}")
+                progress_bar.grid_forget()
     
-    load_btn1 = tk.Button(root, text="Load Time Series1", command=load_file1, width=20, height=2)
+    load_btn1 = tk.Button(root, text="📂 Load Time Series1", command=load_file1, width=20, height=2,background="lightblue")
     load_btn1.grid(row=2, column=0 , pady=10, padx=10)
 
-    load_btn2 = tk.Button(root, text="Load Time Series2", command=load_file2, width=20, height=2)
-    load_btn2.grid(row=2, column=0, columnspan=2, pady=10)
+    load_btn2 = tk.Button(root, text="📂 Load Time Series2", command=load_file2, width=20, height=2,background="lightblue")
+    load_btn2.grid(row=2, column=1, pady=10, padx=10)
+    
+    progress_bar = ttk.Progressbar(root, length=300, mode="determinate")
+    
+    file_label1 = tk.Label(root, text="❌ No file loaded", fg="blue",bg="white")
+    file_label1.grid(row=3, column=0, pady=5)
+    
+    file_label2 = tk.Label(root, text="❌ No file loaded", fg="blue",bg="white")
+    file_label2.grid(row=3, column=1, pady=5)
     
     step_label = tk.Label(root, text="Step value", font=("Helvetica", 14,"bold"), bg="#F0C38E", fg="#0F2573")
     step_label.grid(row=3,column=0, columnspan=2, pady=10)
@@ -144,22 +163,21 @@ def create_gui():
 
     start_viewer_btn = tk.Button(root, text="Start Visualize & Align", command=lambda: start_viewer(pcd1, pcd2, step_value.get()),width=22, height=2)
     start_viewer_btn.grid(row=6, column=1, pady=10, padx=10)
-    
-    progress_queue = queue.Queue()
 
-    start_calculate_btn = tk.Button(root, text="Start Calculate Volume", command=lambda:[
+    progress_queue = queue.Queue()
+    start_calculate_btn = tk.Button(root, text="🚀 Start Calculate Volume", command=lambda:[
             stop_animation.clear(),
             threading.Thread(target=animate_gif, args=(canvas, dolphin_sequence, dolphin_id, stop_animation)).start(),
             threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue)).start(),
             start_progress(stop_animation,progress_queue)
             #threading.Thread(target=start_progress, args=(stop_animation)).start(),
         ],width=22, height=2)
-    start_calculate_btn.grid(row=2, column=1, pady=10, padx=10)
+    start_calculate_btn.grid(row=2, column=0, columnspan=2, pady=10)
     
     #result_label = tk.Label(root, text="Results will appear here.", font=("Helvetica", 14,"bold"), bg='#FFF9F0', fg="#187C19")
     #result_label.grid(row=12, column=0, columnspan=2, pady=0, padx=20)
 
-    man_btn = tk.Button(root, text="User manual", command=show_man,width=18, height=2)
+    man_btn = tk.Button(root, text="⚙️ User manual", command=show_man,width=18, height=2)
     #man_btn.grid(row=10, rowspan=3,pady=10, padx=5)
     man_btn.grid(row=14,pady=10,padx=5)
     squear = tk.Canvas(root, width=200, height=200, bg="black")
@@ -207,6 +225,8 @@ def create_gui():
     def start_calculate(src_pcd, target_pcd,progress_queue):
         total_steps = 10
         current_step = 0
+        src_points = np.asarray(src_pcd.points)
+        tgt_points = np.asarray(target_pcd.points)
         
         def update_progress():
             nonlocal current_step
@@ -214,11 +234,6 @@ def create_gui():
             percentage = int((current_step / total_steps) * 100)
             progress_queue.put(percentage)
             
-        update_progress()
-            
-        src_points = np.asarray(src_pcd.points)
-        tgt_points = np.asarray(target_pcd.points)
-        
         update_progress()
 
         src_x_min, src_x_max = min(src_points[:, 0]), max(src_points[:, 0])
@@ -292,6 +307,7 @@ def create_gui():
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
+        
         update_progress()
             
         # Transformation Metrics (using ICP)
@@ -317,8 +333,8 @@ def create_gui():
             result_text.delete(1.0, tk.END)
             result_text.config(state=tk.DISABLED)
         
-            load_btn1.config(fg="#0F2573", text="Load Time Series1")
-            load_btn2.config(fg="#0F2573", text="Load Time Series2")
+            load_btn1.config(fg="#0F2573", text="📂 Load Time Series1")
+            load_btn2.config(fg="#0F2573", text="📂 Load Time Series2")
         
             global src_file, tgt_file
             src_file = None
@@ -335,68 +351,52 @@ def create_gui():
             fg="#187C19"
         )
         reset_btn.grid(row=14,column=0, columnspan=2, rowspan=5, pady=5, padx=5, sticky="n")
-        graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
+        graph = tk.Button(root, text="📊 Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
         graph.grid(row=4, pady=10, padx=5,rowspan=2)
           
         view = tk.Button(root, text="Volume Change", command=lambda: view_all(pcd1,pcd2), width=22, height=2)
         view.grid(row=7,column=1, pady=10, padx=10)
         
-        ts1 = tk.Button(root, text="Time Series1",command=lambda:visualize_a_point_cloud(pcd1, "Time Series1",apply_cmap=True),width=22, height=2)
+        ts1 = tk.Button(root, text="Time Series1",command=lambda:visualize_a_point_cloud_color(pcd1, "Time Series1",apply_cmap=True),width=22, height=2)
         ts1.grid(row=7,pady=10, padx=5)
         
-        ts2 = tk.Button(root, text="Time Series2",command=lambda:visualize_a_point_cloud(pcd2, "Time Series2",apply_cmap=True),width=22, height=2)
+        ts2 = tk.Button(root, text="Time Series2",command=lambda:visualize_a_point_cloud_color(pcd2, "Time Series2",apply_cmap=True),width=22, height=2)
         ts2.grid(row=7,column=0, columnspan=2, pady=10)
         
         def view_all(pcd1, pcd2, threshold_min=-0.1, threshold_max=0.1):
-            pcd2_copy = copy.deepcopy(pcd2)
-            points1 = np.asarray(pcd1.points)
-            points2 = np.asarray(pcd2.points)
+                try:
+                    temp_file1 = "pcd1_volume.ply"
+                    temp_file2 = "pcd2_volume.ply"
 
-            # ใช้ KD-Tree เพื่อจับคู่จุดที่ใกล้ที่สุด
-            tree = cKDTree(points1[:, :2])  # ใช้แค่ (X, Y) ในการหาเพื่อนบ้าน
-            distances, indices = tree.query(points2[:, :2])  # ค้นหาจุดที่ใกล้ที่สุดใน pcd1
+                    o3d.io.write_point_cloud(temp_file1, pcd1)
+                    o3d.io.write_point_cloud(temp_file2, pcd2)
 
-            # กรองเฉพาะจุดที่มีการจับคู่ที่ดี (ค่าระยะทางต่ำ)
-            valid_mask = distances < 1.0  # ระยะห่างต้องไม่เกิน 1 เมตร (ปรับตามข้อมูลจริง)
-
-            matched_points1 = points1[indices[valid_mask]]  # จุดที่ถูกแมปจาก pcd1
-            matched_points2 = points2[valid_mask]  # จุดที่ถูกแมปจาก pcd2
-
-            # คำนวณ delta_alt จากค่า Z ที่จับคู่กัน
-            delta_alt = matched_points2[:, 2] - matched_points1[:, 2]
-
-            # Normalize ค่า delta_alt
-            norm1 = Normalize(vmin=threshold_min, vmax=threshold_max)
-            colormap = cm.get_cmap('bwr')  # ใช้สี blue-white-red
-            colors = colormap(norm1(delta_alt))[:, :3]  # ตัดค่า alpha ออก
-
-            # กำหนดสีให้ pcd2 เฉพาะจุดที่ถูกแมป
-            new_colors = np.zeros_like(points2)  # ค่า default คือดำ
-            new_colors[valid_mask] = colors  # ใช้สีที่คำนวณมาได้
-
-            pcd2_copy.colors = o3d.utility.Vector3dVector(new_colors)  # อัปเดตสีของ pcd2
-
-            # แสดงผลใน Open3D
-            o3d.visualization.draw_geometries([pcd2_copy])
+                    subprocess.Popen(["python", "visualize_volume.py", temp_file1, temp_file2, str(threshold_min), str(threshold_max)], start_new_session=True)
+                except:
+                    messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
         
-        def apply_colormap(pcd, colormap_name='viridis_r'):
-            points = np.asarray(pcd.points)
-            z_values = points[:, 2]  
-            colormap = plt.get_cmap(colormap_name)
-            normalized_z = (z_values - np.min(z_values)) / (np.max(z_values) - np.min(z_values))
-            colors = colormap(normalized_z)[:, :3] 
-            pcd.colors = o3d.utility.Vector3dVector(colors)
+        #def apply_colormap(pcd, colormap_name='viridis_r'):
+        #    points = np.asarray(pcd.points)
+        #    z_values = points[:, 2]  
+        #    colormap = plt.get_cmap(colormap_name)
+        #    normalized_z = (z_values - np.min(z_values)) / (np.max(z_values) - np.min(z_values))
+        #    colors = colormap(normalized_z)[:, :3] 
+        #    pcd.colors = o3d.utility.Vector3dVector(colors)
                 
-        def visualize_a_point_cloud(pcd, title,apply_cmap=False, colormap_name='viridis_r'):
+        def visualize_a_point_cloud_color(pcd, title, apply_cmap=False):
             try:
-                original_colors_pcd1 = np.asarray(pcd1.colors).copy() if pcd1.colors else np.zeros_like(np.asarray(pcd1.points))
-                original_colors_pcd2 = np.asarray(pcd2.colors).copy() if pcd2.colors else np.zeros_like(np.asarray(pcd2.points))
-                if apply_cmap:
-                    apply_colormap(pcd, colormap_name)
-                o3d.visualization.draw_geometries([pcd], window_name=title)
+                # original_colors_pcd1 = np.asarray(pcd1.colors).copy() if pcd1.colors else np.zeros_like(np.asarray(pcd1.points))
+                # original_colors_pcd2 = np.asarray(pcd2.colors).copy() if pcd2.colors else np.zeros_like(np.asarray(pcd2.points))
+                # if apply_cmap:
+                #     apply_colormap(pcd, colormap_name)
+                # o3d.visualization.draw_geometries([pcd], window_name=title+"color?")
                 
-                pcd1.colors = o3d.utility.Vector3dVector(original_colors_pcd1)
-                pcd2.colors = o3d.utility.Vector3dVector(original_colors_pcd2)
+                # pcd1.colors = o3d.utility.Vector3dVector(original_colors_pcd1)
+                # pcd2.colors = o3d.utility.Vector3dVector(original_colors_pcd2)
+                temp_file = f"{title}_color.ply"
+                o3d.io.write_point_cloud(temp_file, pcd)
+
+                subprocess.Popen(["python", "visualize_color.py", temp_file, title, str(apply_cmap)], start_new_session=True)
     
             except:
                 messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
@@ -414,14 +414,15 @@ def create_gui():
                 graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
                 graph.grid(row=4, pady=10, padx=5,rowspan=2)
         
-        result_text = tk.Text(root, height=10, width=20, wrap="word", font=("Arial", 17,"bold"))
+        result_text = tk.Text(root, height=10, width=30, wrap="word", font=("Arial", 17,"bold"))
         result_text.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
 
         result_text.config(state=tk.NORMAL)
+        result_text.tag_configure("center", justify="center")
         result_text.insert(tk.END, f"\n{np.array2string(transformation_matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})}\n\n\n")
         result_text.config(state=tk.DISABLED)
-        copy_label = tk.Button(root, text="Copy", command=copy_to_clipboard, fg="blue", cursor="hand2", width=5, height=2,font=("Arial", 13,"bold"))
-        copy_label.grid(row=12 , column=0, columnspan=2, rowspan=5, pady=25, padx=5, sticky="n")
+        copy_label = tk.Button(root, text="📋", command=copy_to_clipboard, fg="blue", cursor="hand2",font=("Arial", 13,"bold"))
+        copy_label.grid(row=12 , column=0, columnspan=2, rowspan=5, pady=25, padx=6, sticky="n")
         copy_label.bind("<Button-1>", copy_to_clipboard)
         #copy_button = tk.Button(root, text="Copy", command=copy_to_clipboard, width=5,height=1 )
         #copy_button.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
@@ -436,7 +437,7 @@ def create_gui():
         print("History Entry Added:", history_entry)  # ตรวจสอบข้อมูลที่เพิ่มเข้าไป
 
         # เพิ่มปุ่ม "View History"
-        history_btn = tk.Button(root, text="View More and History", command=show_history, width=22, height=2)
+        history_btn = tk.Button(root, text="⏳ View More and History", command=show_history, width=22, height=2)
         history_btn.grid(row=4, column=1, pady=10, padx=10,rowspan=2)
         #history_btn.grid(row=11,pady=10, padx=5)
     
@@ -490,24 +491,24 @@ def create_gui():
         plt.show()
     
     def start_progress(stop_animation,progress_queue):
-        def update_progress():
-            if not progress_queue.empty():
-                percentage = progress_queue.get()
-                percentage_label.config(text=f"{percentage}%")
-                percentage_label.update()
-            if not stop_animation.is_set():  
-                root.after(100, update_progress)  # อัปเดตทุก 100ms
-            else:
-                percentage_label.config(text="Completed!")  
+            def update_progress():
+                if not progress_queue.empty():
+                    percentage = progress_queue.get()
+                    percentage_label.config(text=f"{percentage}%")
+                    percentage_label.update()
+                if not stop_animation.is_set():  
+                    root.after(100, update_progress)  # อัปเดตทุก 100ms
+                else:
+                    percentage_label.config(text="Completed!")  
 
-        update_progress()
+            update_progress()
     
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
     
     canvas = tk.Canvas(root, width=50, height=70, bg='#F0C38E')
     
-    dolphin_gif = Image.open('/Users/suchayapanchuay/Documents/Project/blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
+    dolphin_gif = Image.open('./blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
     dolphin_sequence = [
         ImageTk.PhotoImage(img.resize((50, 70), Image.Resampling.LANCZOS))
         for img in ImageSequence.Iterator(dolphin_gif)
@@ -524,7 +525,11 @@ def create_gui():
 
 def visualize_a_point_cloud(pcd, title):
     try:
-        o3d.visualization.draw_geometries([pcd], window_name=title)
+        # o3d.visualization.draw_geometries([pcd], window_name=title)
+        temp_file = f"{title}.ply"
+        o3d.io.write_point_cloud(temp_file, pcd)
+
+        subprocess.Popen(["python", "visualize.py", temp_file, title], start_new_session=True)
         
     except:
         messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
@@ -663,6 +668,8 @@ def draw_interactive(pcd1, pcd2, matrix1, matrix2, step):
 
     vis.run()
     vis.destroy_window()
+
+
 
 if __name__ == "__main__":
     create_gui()
