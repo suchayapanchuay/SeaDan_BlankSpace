@@ -10,6 +10,7 @@ testfolder/
 # ignore python complied files
 *.pyc
 *.pyo
+*.ply
 
 # Ignore IDE/editor specific files
 .vscode/
