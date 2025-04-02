@@ -53,14 +53,14 @@ def create_gui():
     root.title("SeaDan")
     root.geometry("1000x1000")
     
-    bg_image = Image.open('/Users/suchayapanchuay/Documents/Project/blankspace/image/Background.jpg')
+    bg_image = Image.open('./image/Background.jpg')
     bg_image = bg_image.resize((1000, 1000))  # ปรับขนาดรูปภาพให้พอดีกับหน้าต่าง
     bg_photo = ImageTk.PhotoImage(bg_image)
     
     bg_label = tk.Label(root, image=bg_photo)
     bg_label.place(relwidth=1, relheight=1)
  
-    image = Image.open('/Users/suchayapanchuay/Documents/Project/blankspace/image/Main_Logo.png')  
+    image = Image.open('./image/Main_Logo.png')  
     image = image.resize((100, 100))  # ปรับขนาดรูปภาพ
     photo = ImageTk.PhotoImage(image)
     
@@ -387,7 +387,7 @@ def create_gui():
             colors = colormap(normalized_z)[:, :3] 
             pcd.colors = o3d.utility.Vector3dVector(colors)
                 
-        def visualize_a_point_cloud(pcd, title,apply_cmap=False, colormap_name='viridis_r'):
+        def visualize_a_point_cloud(pcd, title, apply_cmap=False, colormap_name='viridis_r'):
             try:
                 original_colors_pcd1 = np.asarray(pcd1.colors).copy() if pcd1.colors else np.zeros_like(np.asarray(pcd1.points))
                 original_colors_pcd2 = np.asarray(pcd2.colors).copy() if pcd2.colors else np.zeros_like(np.asarray(pcd2.points))
@@ -507,7 +507,7 @@ def create_gui():
     
     canvas = tk.Canvas(root, width=50, height=70, bg='#F0C38E')
     
-    dolphin_gif = Image.open('/Users/suchayapanchuay/Documents/Project/blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
+    dolphin_gif = Image.open('./image/gif2.gif')  # ใส่พาธ GIF ของคุณ
     dolphin_sequence = [
         ImageTk.PhotoImage(img.resize((50, 70), Image.Resampling.LANCZOS))
         for img in ImageSequence.Iterator(dolphin_gif)
