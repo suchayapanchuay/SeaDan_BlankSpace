@@ -55,15 +55,20 @@ def create_gui():
     root.title("SeaDan")
     root.geometry("2000x2000")
     
-    
-    bg_image = Image.open('./blankspace/image/Background.jpg')
+    try:
+        bg_image = Image.open('./blankspace/image/Background.jpg')
+    except:
+        bg_image = Image.open('./image/Background.jpg')
     bg_image = bg_image.resize((2000, 2000))  # ปรับขนาดรูปภาพให้พอดีกับหน้าต่าง
     bg_photo = ImageTk.PhotoImage(bg_image)
     
     bg_label = tk.Label(root, image=bg_photo)
     bg_label.place(relwidth=1, relheight=1)
  
-    image = Image.open('./blankspace/image/Main_Logo.png')  
+    try:
+        image = Image.open('./blankspace/image/Main_Logo.png')  
+    except:
+        image = Image.open('./image/Main_Logo.png')
     image = image.resize((100, 100))  # ปรับขนาดรูปภาพ
     photo = ImageTk.PhotoImage(image)
     
@@ -508,7 +513,10 @@ def create_gui():
     
     canvas = tk.Canvas(root, width=50, height=70, bg='#F0C38E')
     
-    dolphin_gif = Image.open('./blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
+    try:
+        dolphin_gif = Image.open('./blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
+    except:
+        dolphin_gif = Image.open('./image/gif2.gif')  # ใส่พาธ GIF ของคุณ
     dolphin_sequence = [
         ImageTk.PhotoImage(img.resize((50, 70), Image.Resampling.LANCZOS))
         for img in ImageSequence.Iterator(dolphin_gif)
