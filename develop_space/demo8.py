@@ -74,8 +74,8 @@ def create_gui():
     image_label.image = photo  # เก็บอ้างอิงรูปภาพเพื่อไม่ให้ถูกลบ
     image_label.grid(row=0, column=0,columnspan=2, pady=(7, 0), padx=20, sticky="n")
       
-    header_label = tk.Label(root, text="Welcome to SeaDan", font=("Helvetica", 21, 'bold'),bg='#FFF9F0',fg="#0F2573") 
-    header_label.grid(row=1, column=0, columnspan=2, pady=5, padx=20, sticky="n")
+    header_label = tk.Label(root, text="SeaDan", font=("Helvetica", 21, 'bold'),bg='#FFF9F0',fg="#0F2573") 
+    header_label.grid(row=1, column=0, columnspan=2, pady=3, padx=20, sticky="n")
     
     pcd1 = None
     pcd2 = None
@@ -147,14 +147,26 @@ def create_gui():
     file_label2 = tk.Label(root, text="❌ No file loaded", fg="blue",bg="white")
     file_label2.grid(row=3, column=1, pady=5)
     
+    #step_label = tk.Label(root, text="Step value", font=("Helvetica", 14,"bold"), bg="#F0C38E", fg="#0F2573")
+    #step_label.grid(row=3,column=0, columnspan=2, pady=10)
+    #
+    #step_entry = tk.Entry(root, textvariable=step_value)
+    #step_entry.grid(row=4,column=0, columnspan=2, pady=10)
+    
     step_label = tk.Label(root, text="Step value", font=("Helvetica", 14,"bold"), bg="#F0C38E", fg="#0F2573")
-    step_label.grid(row=3,column=0, columnspan=2, pady=10)
+    step_label.grid(row=3,column=0, columnspan=2, pady=10,sticky="w",padx=570)
+    
+    step_entry = tk.Entry(root, textvariable=step_value)
+    step_entry.grid(row=4,column=0, columnspan=2, pady=10,sticky="w",padx=510)
+    
+    grid_size = tk.Label(root, text="Grid size", font=("Helvetica", 14,"bold"), bg="#F0C38E", fg="#0F2573")
+    grid_size.grid(row=3,column=0, columnspan=2, pady=10,sticky="e",padx=570)
+    
+    grid_entry = tk.Entry(root)
+    grid_entry.grid(row=4,column=0, columnspan=2, pady=10,sticky="e",padx=510)
     
     transfrom_label = tk.Label(root, text="Result Transformation Metric", font=("Helvetica", 16,"bold"), bg='#FFF9F0', fg="#0F2573")
     transfrom_label.grid(row=8, column=0, columnspan=2, pady=0, padx=20)
-
-    step_entry = tk.Entry(root, textvariable=step_value)
-    step_entry.grid(row=4,column=0, columnspan=2, pady=10)
 
     start_vis_source = tk.Button(root, text="Start Visualization Time Series1", command=lambda: visualize_a_point_cloud(pcd1, "Time Series1"),width=22, height=2)
     start_vis_target = tk.Button(root, text="Start Visualization Time Series2", command=lambda: visualize_a_point_cloud(pcd2, "Time Series2"),width=22, height=2)
