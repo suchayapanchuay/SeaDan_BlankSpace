@@ -85,6 +85,7 @@ def create_gui():
     pcd1 = None
     pcd2 = None
     step_value = tk.DoubleVar(value=0.05)
+    grid_value = tk.DoubleVar(value=0.05)
     last_loaded_file1 = None  
     last_loaded_file2 = None
     
@@ -167,7 +168,7 @@ def create_gui():
     grid_size = tk.Label(root, text="Grid size", font=("Helvetica", 14,"bold"), bg="#F0C38E", fg="#0F2573")
     grid_size.grid(row=3,column=0, columnspan=2, pady=10,sticky="e",padx=570)
     
-    grid_entry = tk.Entry(root)
+    grid_entry = tk.Entry(root, textvariable=grid_value)
     grid_entry.grid(row=4,column=0, columnspan=2, pady=10,sticky="e",padx=510)
     
     transfrom_label = tk.Label(root, text="Result Transformation Metric", font=("Helvetica", 16,"bold"), bg='#FFF9F0', fg="#0F2573")
@@ -185,7 +186,7 @@ def create_gui():
     start_calculate_btn = tk.Button(root, text="🚀 Start Calculate Volume", command=lambda:[
             stop_animation.clear(),
             threading.Thread(target=animate_gif, args=(canvas, dolphin_sequence, dolphin_id, stop_animation)).start(),
-            threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue)).start(),
+            threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue, grid_value.get())).start(),
             start_progress(stop_animation,progress_queue)
             #threading.Thread(target=start_progress, args=(stop_animation)).start(),
         ],width=22, height=2)
@@ -239,7 +240,7 @@ def create_gui():
         next_frame()
         
         
-    def start_calculate(src_pcd, target_pcd,progress_queue):
+    def start_calculate(src_pcd, target_pcd,progress_queue, grid_size=1.0):
         total_steps = 10
         current_step = 0
         src_points = np.asarray(src_pcd.points)
@@ -269,8 +270,8 @@ def create_gui():
         width_meters = gbl_x_max - gbl_x_min
         height_meters = gbl_y_max - gbl_y_min
 
-        col_width = 1.0  
-        row_width = 1.0  
+        col_width = grid_size
+        row_width = grid_size
         
         #col_width = 0.1  
         #row_width = 0.1 
@@ -329,7 +330,8 @@ def create_gui():
             
         # Transformation Metrics (using ICP)
         reg_icp = o3d.pipelines.registration.registration_icp(
-            src_pcd, target_pcd, 0.005, np.eye(4),
+            # src_pcd, target_pcd, 0.005, np.eye(4),
+            target_pcd, src_pcd, 0.005, np.eye(4),
             o3d.pipelines.registration.TransformationEstimationPointToPoint()
         )
         transformation_matrix = reg_icp.transformation
@@ -639,29 +641,39 @@ def rotate_cloud(vis, pcd, axis="x"):
     rotation = pcd.get_rotation_matrix_from_xyz(axis_values)
     pcd.rotate(rotation)
     vis.update_geometry(pcd)
+# def key_callback_1(vis, pcd1, matrix1, step):
+#     vis.register_key_callback(65, lambda vis: move_cloud(vis, pcd1, "left", matrix1, step))     #A
+#     vis.register_key_callback(68, lambda vis: move_cloud(vis, pcd1, "right", matrix1, step))    #D
+#     vis.register_key_callback(87, lambda vis: move_cloud(vis, pcd1, "up", matrix1, step))       #W
+#     vis.register_key_callback(83, lambda vis: move_cloud(vis, pcd1, "down", matrix1, step))     #S
+#     vis.register_key_callback(88, lambda vis: rotate_cloud(vis, pcd1, "x"))                     #X
+#     vis.register_key_callback(89, lambda vis: rotate_cloud(vis, pcd1, "y"))                     #Y
+#     vis.register_key_callback(90, lambda vis: rotate_cloud(vis, pcd1, "z"))                     #Z
+#     vis.register_key_callback(88, lambda vis: rotate_cloud(vis, pcd1))                          #X
+#     vis.register_key_callback(89, lambda vis: rotate_cloud(vis, pcd1))                          #Y
+#     vis.register_key_callback(90, lambda vis: rotate_cloud(vis, pcd1))                          #Z
+#     vis.register_key_callback(81, lambda vis: move_cloud(vis, pcd1, "forward", matrix1, step))  #Q
+#     vis.register_key_callback(69, lambda vis: move_cloud(vis, pcd1, "backward", matrix1, step)) #E
 
-def key_callback_1(vis, pcd1, matrix1, step):
-    vis.register_key_callback(65, lambda vis: move_cloud(vis, pcd1, "left", matrix1, step))     #A
-    vis.register_key_callback(68, lambda vis: move_cloud(vis, pcd1, "right", matrix1, step))    #D
-    vis.register_key_callback(87, lambda vis: move_cloud(vis, pcd1, "up", matrix1, step))       #W
-    vis.register_key_callback(83, lambda vis: move_cloud(vis, pcd1, "down", matrix1, step))     #S
-    vis.register_key_callback(88, lambda vis: rotate_cloud(vis, pcd1, "x"))                     #X
-    vis.register_key_callback(89, lambda vis: rotate_cloud(vis, pcd1, "y"))                     #Y
-    vis.register_key_callback(90, lambda vis: rotate_cloud(vis, pcd1, "z"))                     #Z
-    vis.register_key_callback(88, lambda vis: rotate_cloud(vis, pcd1))                          #X
-    vis.register_key_callback(89, lambda vis: rotate_cloud(vis, pcd1))                          #Y
-    vis.register_key_callback(90, lambda vis: rotate_cloud(vis, pcd1))                          #Z
-    vis.register_key_callback(81, lambda vis: move_cloud(vis, pcd1, "forward", matrix1, step))  #Q
-    vis.register_key_callback(69, lambda vis: move_cloud(vis, pcd1, "backward", matrix1, step)) #E
+def key_callback_1(vis, pcd2, matrix2, step):
+    vis.register_key_callback(65, lambda vis: move_cloud(vis, pcd2, "left", matrix2, step))     #A
+    vis.register_key_callback(68, lambda vis: move_cloud(vis, pcd2, "right", matrix2, step))    #D
+    vis.register_key_callback(87, lambda vis: move_cloud(vis, pcd2, "up", matrix2, step))       #W
+    vis.register_key_callback(83, lambda vis: move_cloud(vis, pcd2, "down", matrix2, step))     #S
+    vis.register_key_callback(88, lambda vis: rotate_cloud(vis, pcd2, "x"))                     #X
+    vis.register_key_callback(89, lambda vis: rotate_cloud(vis, pcd2, "y"))                     #Y
+    vis.register_key_callback(90, lambda vis: rotate_cloud(vis, pcd2, "z"))                     #Z
+    vis.register_key_callback(81, lambda vis: move_cloud(vis, pcd2, "forward", matrix2, step))  #Q
+    vis.register_key_callback(69, lambda vis: move_cloud(vis, pcd2, "backward", matrix2, step)) #E
 
-def key_callback_2(vis, pcd2, matrix2, step):
-    vis.register_key_callback(74, lambda vis: move_cloud(vis, pcd2, "left", matrix2, step))     #J
-    vis.register_key_callback(76, lambda vis: move_cloud(vis, pcd2, "right", matrix2, step))    #L
-    vis.register_key_callback(73, lambda vis: move_cloud(vis, pcd2, "up", matrix2, step))       #I
-    vis.register_key_callback(75, lambda vis: move_cloud(vis, pcd2, "down", matrix2, step))     #K
-    vis.register_key_callback(85, lambda vis: rotate_cloud(vis, pcd2))                          #U
-    vis.register_key_callback(79, lambda vis: move_cloud(vis, pcd2, "forward", matrix2, step))  #O
-    vis.register_key_callback(80, lambda vis: move_cloud(vis, pcd2, "backward", matrix2, step)) #P
+# def key_callback_2(vis, pcd2, matrix2, step):
+#     vis.register_key_callback(74, lambda vis: move_cloud(vis, pcd2, "left", matrix2, step))     #J
+#     vis.register_key_callback(76, lambda vis: move_cloud(vis, pcd2, "right", matrix2, step))    #L
+#     vis.register_key_callback(73, lambda vis: move_cloud(vis, pcd2, "up", matrix2, step))       #I
+#     vis.register_key_callback(75, lambda vis: move_cloud(vis, pcd2, "down", matrix2, step))     #K
+#     vis.register_key_callback(85, lambda vis: rotate_cloud(vis, pcd2))                          #U
+#     vis.register_key_callback(79, lambda vis: move_cloud(vis, pcd2, "forward", matrix2, step))  #O
+#     vis.register_key_callback(80, lambda vis: move_cloud(vis, pcd2, "backward", matrix2, step)) #P
 
 def draw(pcd1, pcd2, matrix1, matrix2, step):
     vis = o3d.visualization.VisualizerWithKeyCallback()
@@ -670,8 +682,9 @@ def draw(pcd1, pcd2, matrix1, matrix2, step):
     vis.add_geometry(pcd1)
     vis.add_geometry(pcd2)
 
-    key_callback_1(vis, pcd1, matrix1, step)
-    key_callback_2(vis, pcd2, matrix2, step)
+    # key_callback_1(vis, pcd1, matrix1, step)
+    key_callback_1(vis, pcd2, matrix2, step)
+    # key_callback_2(vis, pcd2, matrix2, step)
 
     vis.run()
     vis.destroy_window()
@@ -683,8 +696,9 @@ def draw_interactive(pcd1, pcd2, matrix1, matrix2, step):
     vis.add_geometry(pcd1)
     vis.add_geometry(pcd2)
 
-    key_callback_1(vis, pcd1, matrix1, step)
-    key_callback_2(vis, pcd2, matrix2, step)
+    # key_callback_1(vis, pcd1, matrix1, step)
+    key_callback_1(vis, pcd2, matrix2, step)
+    # key_callback_2(vis, pcd2, matrix2, step)
 
     vis.run()
     vis.destroy_window()
