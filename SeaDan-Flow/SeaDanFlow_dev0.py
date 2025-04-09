@@ -109,9 +109,9 @@ def create_gui():
     files_frame = tk.Frame(content_frame, bg="#F5F5F5")
     files_frame.grid(row=0, column=0, padx=10, pady=10)
 
-    file1_frame = tk.LabelFrame(files_frame, text="Time Series1", bg="#F5F5F5")
+    file1_frame = tk.LabelFrame(files_frame, text="Time Series1 / Before", bg="#F5F5F5")
     file1_frame.grid(row=0, sticky='we')
-    file2_frame = tk.LabelFrame(files_frame, text="Time Series2", bg="#F5F5F5")
+    file2_frame = tk.LabelFrame(files_frame, text="Time Series2 / After", bg="#F5F5F5")
     file2_frame.grid(row=1, sticky="we")
     # load_btn1 = tk.Button(root, text="📂 Load Time Series1", command=load_file1, width=20, height=2,background="lightblue")
     load_btn1 = ttk.Button(file1_frame, text="📄 Open File", command=load_file1, width=15) #Load Time Series 1
@@ -169,7 +169,7 @@ def create_gui():
     start_vis_target.grid(row=0, column=2, pady=10, padx=5)
 
     start_viewer_btn = ttk.Button(visualize_and_align_frame, text="Visualize & Align", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
-    start_viewer_btn.grid(row=1, column=1, pady=5, padx=5, sticky="w")
+    start_viewer_btn.grid(row=1, column=1, pady=5, padx=5, sticky="we")
 
     progress_queue = queue.Queue()
     # start_calculate_btn = ttk.Button(calculator_frame, text="🚀 Start Calculate", command=lambda:[
@@ -186,7 +186,7 @@ def create_gui():
     start_calculate_btn.grid(row=1, column=1, pady=10, padx=5, sticky="we")
 
     man_btn = ttk.Button(visualize_and_align_frame, text="❔manual", command=show_man)
-    man_btn.grid(row=2, column=1, pady=5, padx=5, sticky="w")
+    man_btn.grid(row=2, column=1, pady=5, padx=5, sticky="we")
 
     # squear = tk.Canvas(root, width=200, height=200, bg="black")
     # squear.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
@@ -419,12 +419,21 @@ def create_gui():
                 graph = tk.Button(root, text="Graph", command=lambda:plot_graph(src_avg_alt_mat, tgt_avg_alt_mat, delta_alt_mat, gbl_z_min, gbl_z_max, width_meters, height_meters, sand_increase, sand_decrease), width=22, height=2)
                 graph.grid(row=4, pady=10, padx=5,rowspan=2)
         
-        result_text = tk.Text(result_frame, height=10, width=30, wrap="word", font=("Arial", 17,"bold"))
+        calculation_result = (f"Transformation Metrics:\n\n{np.array2string(transformation_matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})}\n\n"
+                      f"Total Volume Change: {total_volume_change:.2f} m³\nElapsed Time: {elapsed_time:.2f} seconds\n"
+                      f"Global Altitude Range: {gbl_z_min:.2f} to {gbl_z_max:.2f}\n"
+                      f"-----------------------------------------------------------------------------------------------------------------------")
+
+        history_data.append(calculation_result)
+        print("History Entry Added:", calculation_result)  # ตรวจสอบข้อมูลที่เพิ่มเข้าไป
+
+        result_text = tk.Text(result_frame, height=10, width=30, wrap="word", font=("Arial", 12))
         result_text.grid(row=1, column=0, padx=5, pady=5)
 
         result_text.config(state=tk.NORMAL)
         result_text.tag_configure("center", justify="center")
-        result_text.insert(tk.END, f"\n{np.array2string(transformation_matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})}\n\n\n")
+        # result_text.insert(tk.END, f"\n{np.array2string(transformation_matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})}\n\n\n")
+        result_text.insert(tk.END, calculation_result.rstrip('-').rstrip('\n'))
         result_text.config(state=tk.DISABLED)
         copy_label = ttk.Button(result_frame_r2, text="📋 Copy", command=copy_to_clipboard, cursor="hand2")
         copy_label.grid(row=0, column=0, pady=5, padx=5, sticky='w')
@@ -432,16 +441,10 @@ def create_gui():
         result_text.bind("<Button-3>", copy_to_clipboard)
         
     
-        history_entry = (f"Transformation Metrics\n\n{np.array2string(transformation_matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})}\n\n\n"
-                      f"Total Volume Change: {total_volume_change:.2f} m³\nElapsed Time: {elapsed_time:.2f} seconds\n"
-                      f"Global Altitude Range: {gbl_z_min:.2f} to {gbl_z_max:.2f}\n"
-                      f"----------------------------------------------------------------------------------------------------------------------------------------------------")
-        history_data.append(history_entry)
-        print("History Entry Added:", history_entry)  # ตรวจสอบข้อมูลที่เพิ่มเข้าไป
 
     # เพิ่มปุ่ม "View History"
-        history_btn = ttk.Button(result_frame, text="⏳ View More and History", command=show_history)
-        history_btn.grid(row=3, column=0, padx=5, pady=5, sticky='w')
+        history_btn = ttk.Button(result_frame_r2, text="⏳ View More and History", command=show_history)
+        history_btn.grid(row=1, column=0,columnspan=2, padx=5, pady=5, sticky='we')
     
         return total_volume_change, reset_gui
     
