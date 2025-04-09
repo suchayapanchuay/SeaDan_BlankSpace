@@ -21,16 +21,15 @@ def create_gui():
     root.title("SeaDan")
     root.geometry("1000x600")
 
-    
     header_frame = tk.Frame(root, bg="#ffffff", height=50)
     header_frame.pack(fill="x")
     
     content_frame = tk.Frame(root, bg="#F5F5F5")
     content_frame.pack(fill="both", expand=True)
-    try:
-        bg_image = Image.open('./image/sea_pixel_art.png')
-    except:
-        bg_image = Image.open('./blankspace/image/Background.jpg')
+    # try:
+    #     bg_image = Image.open('./image/sea_pixel_art.png')
+    # except:
+    #     bg_image = Image.open('./blankspace/image/Background.jpg')
     # bg_photo = ImageTk.PhotoImage(bg_image)
     # bg_label = tk.Label(content_frame, image=bg_photo)
     # bg_label.place(relwidth=1, relheight=1)
@@ -123,8 +122,11 @@ def create_gui():
     load_btn2 = ttk.Button(file2_frame, text="📄 Open File", command=load_file2, width=15) #Load Time Series 2
     load_btn2.grid(row=0, column=1, pady=10, padx=10)
     # load_btn2.pack()
+
+    calculator_frame = tk.LabelFrame(content_frame, text="Calculate Volume", bg="#F5F5F5")
+    calculator_frame.grid(row=2, column=0, padx=10, pady=10, sticky="we")
     
-    progress_bar = ttk.Progressbar(root, length=300, mode="determinate")
+    progress_bar = ttk.Progressbar(calculator_frame, length=200, mode="determinate")
     
     file_label1 = tk.Label(file1_frame, text="❌ No file loaded", fg="blue",bg="#f5f5f5")
     file_label1.grid(row=0, column=0, pady=5, padx=5)
@@ -144,13 +146,15 @@ def create_gui():
     # step_entry.grid(row=4,column=0, columnspan=2, pady=10,sticky="w",padx=510)
     step_entry.grid(row=0,column=1, padx=5, pady=5)
     
-    calculator_frame = tk.LabelFrame(content_frame, text="Calculate Volume", bg="#F5F5F5")
-    calculator_frame.grid(row=2, column=0, padx=10, pady=10, sticky="we")
     grid_size = tk.Label(calculator_frame, text="Grid size :", font=("Helvetica", 14), bg="#f5f5f5", fg="#0F2573")
     grid_size.grid(row=0,column=0, padx=5)
     
     grid_entry = tk.Entry(calculator_frame, textvariable=grid_value)
-    grid_entry.grid(row=0,column=1, padx=5)
+    grid_entry.grid(row=0,column=1, padx=5, sticky='we')
+
+    progress_bar.grid(row=1, column=2, columnspan=2, padx=5, pady=5)
+    progress_bar.grid_remove()  # ซ่อนไว้ก่อน
+
     
     # transfrom_label = tk.Label(root, text="Result Transformation Metric", font=("Helvetica", 16,"bold"), bg='#FFF9F0', fg="#0F2573")
     # # transfrom_label.grid(row=8, column=0, columnspan=2, pady=0, padx=20)
@@ -168,13 +172,18 @@ def create_gui():
     start_viewer_btn.grid(row=1, column=1, pady=5, padx=5, sticky="w")
 
     progress_queue = queue.Queue()
+    # start_calculate_btn = ttk.Button(calculator_frame, text="🚀 Start Calculate", command=lambda:[
+    #         stop_animation.clear(),
+    #         threading.Thread(target=animate_gif, args=(canvas, dolphin_sequence, dolphin_id, stop_animation)).start(),
+    #         threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue, grid_value.get())).start(),
+    #         start_progress(stop_animation,progress_queue)
+    #     ])
     start_calculate_btn = ttk.Button(calculator_frame, text="🚀 Start Calculate", command=lambda:[
-            stop_animation.clear(),
-            threading.Thread(target=animate_gif, args=(canvas, dolphin_sequence, dolphin_id, stop_animation)).start(),
-            threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue, grid_value.get())).start(),
-            start_progress(stop_animation,progress_queue)
-        ])
-    start_calculate_btn.grid(row=1, column=1, pady=10, padx=5, sticky="w")
+        stop_animation.clear(),
+        threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue, grid_value.get())).start(),
+        start_progress(stop_animation, progress_queue)
+    ])
+    start_calculate_btn.grid(row=1, column=1, pady=10, padx=5, sticky="we")
 
     man_btn = ttk.Button(visualize_and_align_frame, text="❔manual", command=show_man)
     man_btn.grid(row=2, column=1, pady=5, padx=5, sticky="w")
@@ -483,22 +492,27 @@ def create_gui():
         plt.show()
     
     def start_progress(stop_animation,progress_queue):
+        progress_bar.grid()
         def update_progress():
             if not progress_queue.empty():
                 percentage = progress_queue.get()
-                percentage_label.config(text=f"{percentage}%")
-                percentage_label.update()
+                progress_bar['value'] = percentage
+                # percentage_label.config(text=f"{percentage}%")
+                # percentage_label.update()
             if not stop_animation.is_set():  
                 root.after(100, update_progress)  # อัปเดตทุก 100ms
             else:
-                percentage_label.config(text="Completed!")
+                # percentage_label.config(text="Completed!")
+                progress_bar["value"] = 100
+                # root.after(2000, lambda: progress_bar.grid_remove())
+                progress_bar.grid_remove()
 
         update_progress()
     
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
     
-    canvas = tk.Canvas(root, width=70, height=70, bg='#f5f5f5')
+    # canvas = tk.Canvas(root, width=70, height=70, bg='#f5f5f5')
     
     try:
         dolphin_gif = Image.open('./blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
@@ -508,11 +522,11 @@ def create_gui():
         ImageTk.PhotoImage(img.resize((50, 70), Image.Resampling.LANCZOS))
         for img in ImageSequence.Iterator(dolphin_gif)
     ]
-    dolphin_id = canvas.create_image(25, 35, anchor="center", image=dolphin_sequence[0])
-    canvas.place(relx=1.0, rely=1.0, anchor='se', x=-25, y=-30)
+    # dolphin_id = canvas.create_image(25, 35, anchor="center", image=dolphin_sequence[0])
+    # canvas.place(relx=1.0, rely=1.0, anchor='se', x=-25, y=-30)
     
-    percentage_label = tk.Label(root, text="0%")
-    percentage_label.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-10)
+    # percentage_label = tk.Label(root, text="0%")
+    # percentage_label.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-10)
     
     stop_animation = threading.Event() 
 
