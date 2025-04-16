@@ -55,6 +55,10 @@ def create_gui():
     grid_value = tk.DoubleVar(value=1)
     last_loaded_file1 = None  
     last_loaded_file2 = None
+
+    def change_calculate_btn_state():
+        if pcd1 is not None and pcd2 is not None:
+            start_calculate_btn.state(['!disabled'])
     
     def load_file1():
         nonlocal pcd1,last_loaded_file1
@@ -75,6 +79,7 @@ def create_gui():
                 messagebox.showinfo("Success", "File 1 loaded successfully!")
                 
                 progress_bar.grid_forget()
+                change_calculate_btn_state()
             except Exception as e:
                 # load_btn1.config(fg="red")  
                 messagebox.showerror("Error", f"Failed to load file: {e}")
@@ -100,6 +105,7 @@ def create_gui():
                 file_label2.config(text=f"✅ Loaded: {file_path.split('/')[-1]}")  
                 messagebox.showinfo("Success", "File 2 loaded successfully!")
                 progress_bar.grid_forget()
+                change_calculate_btn_state()
             except Exception as e:
                 # load_btn2.config(fg="red",font=("bold")) 
                 messagebox.showerror("Error", f"Failed to load file: {e}")
@@ -182,7 +188,7 @@ def create_gui():
         stop_animation.clear(),
         threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue, grid_value.get())).start(),
         start_progress(stop_animation, progress_queue)
-    ])
+    ], state='disabled')
     start_calculate_btn.grid(row=1, column=1, pady=10, padx=5, sticky="we")
 
     man_btn = ttk.Button(visualize_and_align_frame, text="❔manual", command=show_man)
@@ -512,6 +518,10 @@ def create_gui():
 
         update_progress()
     
+
+    if pcd1 != None and pcd2 != None:
+        start_calculate_btn.state(['!disabled'])  # ปิดการใช้งานปุ่มเริ่มคำนวณ
+        
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
     
@@ -545,6 +555,8 @@ def visualize_a_point_cloud(pcd, title):
         
     except:
         messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
+
+
 
 def start_viewer(pcd1, pcd2, step):
     if pcd1 is not None and pcd2 is not None:
