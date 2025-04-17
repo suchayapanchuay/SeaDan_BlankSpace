@@ -1,9 +1,9 @@
 import open3d as o3d
 import numpy as np
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, Menu
 import math
-from blank_module import calculate_grid_median_with_kdtree, las2Array, read_las_file, pickfile, key_callback_1
+from blank_module import calculate_grid_median_with_kdtree, las2Array, read_las_file, pickfile, key_callback_1, get_optimal_gridsize
 import multiprocessing 
 import time
 import matplotlib.pyplot as plt
@@ -26,6 +26,14 @@ def create_gui():
     
     content_frame = tk.Frame(root, bg="#F5F5F5")
     content_frame.pack(fill="both", expand=True)
+
+    menubar = Menu(root)
+    root.config(menu=menubar)
+    # menubar.add_command(label="File")
+
+    tool_menus = Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="Tools", menu=tool_menus)
+
     # try:
     #     bg_image = Image.open('./image/sea_pixel_art.png')
     # except:
@@ -44,7 +52,7 @@ def create_gui():
     image_label = tk.Label(header_frame, image=photo) #bg='#ADE1FB'
     image_label.image = photo  # เก็บอ้างอิงรูปภาพเพื่อไม่ให้ถูกลบ
     image_label.pack(side="right", padx=20, pady=20)
-      
+    
     header_label = tk.Label(header_frame, text="SeaDan", font=("Helvetica", 20, 'bold'),bg='#FFF9F0',fg="#0F2573") 
     header_label.pack(side="left", padx=20, pady=20)
     
@@ -111,6 +119,33 @@ def create_gui():
                 messagebox.showerror("Error", f"Failed to load file: {e}")
                 progress_bar.grid_forget()
     
+    def open_optimal_grid_size_window():
+        nonlocal pcd1, pcd2, grid_value
+        window = tk.Toplevel()
+        window.title("Optimal Grid Size")
+        window.geometry("300x150")
+        opt_grid_label = tk.Label(window, text="Optimal Grid Size: ", font=("Arial", 10), bg="#F5F5F5")
+        opt_grid_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')
+        optimal_grid_size_text = tk.Text(window, wrap='word', font=("Arial", 10), width=15, height=1)
+        optimal_grid_size_text.grid(row=0, column=1, padx=10, pady=10, sticky='we')
+
+        optimal_grid_size_text.insert(tk.END, "Optimal Grid Size")
+        optimal_grid_size_text.config(state=tk.DISABLED)
+
+        cal_optimal_grid_size_btn = ttk.Button(window, text="get optimal grid size", command=lambda: on_grid_size_click(pcd1, pcd2))
+        cal_optimal_grid_size_btn.grid(row=1, column=1, padx=10, pady=10, sticky='w')
+
+
+        def on_grid_size_click(pcd1, pcd2):
+            grid_size = get_optimal_gridsize(pcd1, pcd2)
+            optimal_grid_size_text.config(state=tk.NORMAL)
+            optimal_grid_size_text.delete(1.0, tk.END)
+            optimal_grid_size_text.insert(tk.END, grid_size)
+            optimal_grid_size_text.config(state=tk.DISABLED)
+            apply_grid_size_btn = ttk.Button(window, text="Apply", command=lambda: grid_value.set(grid_size))
+            apply_grid_size_btn.grid(row=2, column=1, padx=10, pady=10, sticky='w')
+
+    tool_menus.add_command(label="Optimal Grid Size", command=open_optimal_grid_size_window)
 
     files_frame = tk.Frame(content_frame, bg="#F5F5F5")
     files_frame.grid(row=0, column=0, padx=10, pady=10)

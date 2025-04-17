@@ -6,6 +6,78 @@ import laspy
 import open3d as o3d
 from tkinter import filedialog
 
+def cal_optimal_gridsize(src_points, tgt_points, x_min, x_max, y_min, y_max,
+                            min_grid=0.001, max_grid=1, max_iter=20):
+    best_grid_size = max_grid
+    max_grids_with_points = -1
+    current_grid = max_grid
+
+        # STEP 1: / 2 until find  grids_with_points_current max
+    for i in range(max_iter):
+
+        n_cols = math.ceil((x_max - x_min) / current_grid)
+        n_rows = math.ceil((y_max - y_min) / current_grid)
+
+        src_avg_alt_mat, _ = calculate_grid_median_with_kdtree(src_points, x_min, y_min, current_grid, current_grid, n_rows, n_cols)
+        tgt_avg_alt_mat, _ = calculate_grid_median_with_kdtree(tgt_points, x_min, y_min, current_grid, current_grid, n_rows, n_cols)
+
+        delta_alt_mat = tgt_avg_alt_mat - src_avg_alt_mat
+        grids_with_points_current = np.count_nonzero(~np.isnan(delta_alt_mat)) 
+
+        print(f"Iteration {i}: grid_size = {current_grid:.4f}, count = {grids_with_points_current}")
+
+        if grids_with_points_current > max_grids_with_points:
+            max_grids_with_points = grids_with_points_current
+            best_grid_size = current_grid
+        else:
+            break  # stop / 2 เมื่อเจอค่าที่ลดลง
+
+        current_grid /= 2 
+        if current_grid < min_grid:
+            break
+
+    # STEP 2: list grid size 10% (+ - 5 ค่า)
+    adding = [best_grid_size * (1 + (j * 0.1)) for j in range(-5, 6) if best_grid_size * (1 + (j * 0.1)) >= min_grid]
+    print(f"Adding variance: {adding}")
+
+    for new_grid in adding:
+        if new_grid > max_grid:
+            continue  # ข้ามค่าที่เกิน max_grid
+
+        n_cols = math.ceil((x_max - x_min) / new_grid)
+        n_rows = math.ceil((y_max - y_min) / new_grid)
+
+        src_avg_alt_mat, _ = calculate_grid_median_with_kdtree(src_points, x_min, y_min, new_grid, new_grid, n_rows, n_cols)
+        tgt_avg_alt_mat, _ = calculate_grid_median_with_kdtree(tgt_points, x_min, y_min, new_grid, new_grid, n_rows, n_cols)
+
+        delta_alt_mat = tgt_avg_alt_mat - src_avg_alt_mat
+        count_new = np.count_nonzero(~np.isnan(delta_alt_mat))
+
+        print(f"  --> grid_size = {new_grid:.4f}, count = {count_new}")
+
+        if count_new > max_grids_with_points:
+            max_grids_with_points = count_new
+            best_grid_size = new_grid
+    
+    return round(best_grid_size, 4)
+
+def get_optimal_gridsize(src_pcd, tgt_pcd):
+
+
+    src_points = np.asarray(src_pcd.points)
+    tgt_points = np.asarray(tgt_pcd.points)
+
+    src_x_min, src_x_max = min(src_points[:, 0]), max(src_points[:, 0])
+    src_y_min, src_y_max = min(src_points[:, 1]), max(src_points[:, 1])
+    tgt_x_min, tgt_x_max = min(tgt_points[:, 0]), max(tgt_points[:, 0])
+    tgt_y_min, tgt_y_max = min(tgt_points[:, 1]), max(tgt_points[:, 1])
+
+    gbl_x_min, gbl_x_max = min(src_x_min, tgt_x_min), max(src_x_max, tgt_x_max)
+    gbl_y_min, gbl_y_max = min(src_y_min, tgt_y_min), max(src_y_max, tgt_y_max)
+
+    grid_size = cal_optimal_gridsize(src_points, tgt_points, gbl_x_min, gbl_x_max, gbl_y_min, gbl_y_max)
+    return grid_size
+
 def calculate_grid_median_with_kdtree(points, x_min, y_min, col_width, row_width, n_rows, n_cols):
     # Create a KD-tree for fast querying (only using x, y coordinates)
     kdtree = cKDTree(points[:, :2])  # Only use x, y for the KD-tree
