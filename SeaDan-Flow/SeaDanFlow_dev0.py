@@ -32,7 +32,9 @@ def create_gui():
     # menubar.add_command(label="File")
 
     tool_menus = Menu(menubar, tearoff=0)
+    about_menus = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Tools", menu=tool_menus)
+    menubar.add_cascade(label="About", menu=about_menus)
 
     # try:
     #     bg_image = Image.open('./image/sea_pixel_art.png')
@@ -154,6 +156,7 @@ def create_gui():
             apply_grid_size_btn.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
     tool_menus.add_command(label="Optimal Grid Size", command=open_optimal_grid_size_window, state='disabled'   )
+    tool_menus.add_command(label="Merge & Cut")
 
     files_frame = tk.Frame(content_frame, bg="#F5F5F5")
     files_frame.grid(row=0, column=0, padx=10, pady=10)
