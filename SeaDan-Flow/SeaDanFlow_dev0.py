@@ -65,8 +65,16 @@ def create_gui():
     last_loaded_file2 = None
 
     def change_calculate_btn_state():
+        if pcd1 is not None:
+            start_vis_source.state(['!disabled'])
+        
+        if pcd2 is not None:
+            start_vis_target.state(['!disabled'])
+            
         if pcd1 is not None and pcd2 is not None:
             start_calculate_btn.state(['!disabled'])
+            start_viewer_btn.state(['!disabled'])
+            tool_menus.entryconfig("Optimal Grid Size", state="normal")
     
     def load_file1():
         nonlocal pcd1,last_loaded_file1
@@ -145,7 +153,7 @@ def create_gui():
             apply_grid_size_btn = ttk.Button(window, text="Apply", command=lambda: grid_value.set(grid_size))
             apply_grid_size_btn.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
-    tool_menus.add_command(label="Optimal Grid Size", command=open_optimal_grid_size_window)
+    tool_menus.add_command(label="Optimal Grid Size", command=open_optimal_grid_size_window, state='disabled'   )
 
     files_frame = tk.Frame(content_frame, bg="#F5F5F5")
     files_frame.grid(row=0, column=0, padx=10, pady=10)
@@ -202,14 +210,14 @@ def create_gui():
     # transfrom_label.pack()
 
     # Start Visualize Time Series 1 and Time Series 2
-    start_vis_source = ttk.Button(file1_frame, text="Visualize Original", command=lambda: visualize_a_point_cloud(pcd1, "Time Series1"))
-    start_vis_target = ttk.Button(file2_frame, text="Visualize Original", command=lambda: visualize_a_point_cloud(pcd2, "Time Series2"))
+    start_vis_source = ttk.Button(file1_frame, text="Visualize Original", command=lambda: visualize_a_point_cloud(pcd1, "Time Series1"), state='disabled')
+    start_vis_target = ttk.Button(file2_frame, text="Visualize Original", command=lambda: visualize_a_point_cloud(pcd2, "Time Series2"), state='disabled')
     # start_vis_source.grid(row=6,pady=10, padx=5)
     # start_vis_target.grid(row=6,column=0, columnspan=2, pady=10)
     start_vis_source.grid(row=0, column=2, pady=10, padx=5)
     start_vis_target.grid(row=0, column=2, pady=10, padx=5)
 
-    start_viewer_btn = ttk.Button(visualize_and_align_frame, text="Visualize & Align", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
+    start_viewer_btn = ttk.Button(visualize_and_align_frame, state='disabled', text="Visualize & Align", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
     start_viewer_btn.grid(row=1, column=1, pady=5, padx=5, sticky="we")
 
     progress_queue = queue.Queue()
