@@ -1,3 +1,5 @@
+import os
+import sys
 import open3d as o3d
 import numpy as np
 import tkinter as tk
@@ -11,7 +13,6 @@ from matplotlib.colors import Normalize
 from PIL import Image, ImageTk,ImageSequence
 import threading
 import queue
-import threading
 import subprocess
 
 
@@ -598,6 +599,9 @@ def visualize_a_point_cloud(pcd, title):
         o3d.io.write_point_cloud(temp_file, pcd)
 
         subprocess.Popen(["python", "visualize.py", temp_file, title], start_new_session=True)
+        # visualize_exe_path = os.path.join(os.path.dirname(__file__), "visualize.exe")
+        # visualize_exe_path = r'D:\blankspace\meen\SeaDan_BlankSpace\visualize.exe'
+        # subprocess.Popen([visualize_exe_path, temp_file, title])
         
     except:
         messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
