@@ -157,7 +157,7 @@ def create_gui():
             apply_grid_size_btn.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
     tool_menus.add_command(label="Optimal Grid Size", command=open_optimal_grid_size_window, state='disabled'   )
-    tool_menus.add_command(label="Merge & Cut")
+    tool_menus.add_command(label="Merge & Cut", command=run_merge_cut_script)
 
     files_frame = tk.Frame(content_frame, bg="#F5F5F5")
     files_frame.grid(row=0, column=0, padx=10, pady=10)
@@ -667,6 +667,21 @@ def draw_interactive(pcd1, pcd2, matrix1, matrix2, step):
 
     vis.run()
     vis.destroy_window()
+
+# def run_merge_cut_script():
+#     script_path = os.path.join(os.getcwd(), "automate_manage_mem.py")
+#     subprocess.run(["python", script_path])
+
+def run_merge_cut_script():
+    # ดึง path ปัจจุบันของไฟล์ SeaDanFlow_dev0.py
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    script_path = os.path.join(script_dir, "automate_manage_mem.py")
+
+    try:
+        subprocess.Popen([sys.executable, script_path])
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to launch Merge & Cut: {e}")
+
 
 if __name__ == "__main__":
     create_gui()

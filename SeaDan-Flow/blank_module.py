@@ -6,6 +6,32 @@ import laspy
 import open3d as o3d
 from tkinter import filedialog
 
+def convert_o3d_pcd2las(pcd: o3d.geometry.PointCloud, las_path: str):
+    """ แปลง Open3D PointCloud เป็น LAS และบันทึกเป็นไฟล์ .las """
+
+    # ดึงค่าพิกัด XYZ และสี RGB
+    points = np.asarray(pcd.points)  # (N, 3)
+    colors = np.asarray(pcd.colors)  # (N, 3) อยู่ในช่วง 0-1
+
+    # สร้าง Header สำหรับไฟล์ LAS
+    header = laspy.LasHeader(point_format=2, version="1.2")
+    las = laspy.LasData(header)
+
+    # ใส่ค่าพิกัด XYZ ลงในไฟล์ LAS
+    las.x = points[:, 0]
+    las.y = points[:, 1]
+    las.z = points[:, 2]
+
+    # ตรวจสอบว่ามีสีหรือไม่ (ป้องกัน error กรณีไม่มีข้อมูลสี)
+    if colors.shape[0] > 0:
+        las.red = (colors[:, 0] * 65535).astype(np.uint16)
+        las.green = (colors[:, 1] * 65535).astype(np.uint16)
+        las.blue = (colors[:, 2] * 65535).astype(np.uint16)
+    
+    # บันทึกไฟล์ .las
+    las.write(las_path)
+    print(f"✅ บันทึกไฟล์ .las เรียบร้อยที่: {las_path}")
+
 def cal_optimal_gridsize(src_points, tgt_points, x_min, x_max, y_min, y_max,
                             min_grid=0.001, max_grid=1, max_iter=20):
     best_grid_size = max_grid
