@@ -18,7 +18,6 @@ import subprocess
 
 def create_gui():
     root = tk.Tk()
-    #root.iconbitmap('./image/logo_pro.png')
     root.title("SeaDan")
     root.geometry("1000x600")
 
@@ -36,15 +35,7 @@ def create_gui():
     about_menus = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Tools", menu=tool_menus)
     menubar.add_cascade(label="About", menu=about_menus)
-
-    # try:
-    #     bg_image = Image.open('./image/sea_pixel_art.png')
-    # except:
-    #     bg_image = Image.open('./blankspace/image/Background.jpg')
-    # bg_photo = ImageTk.PhotoImage(bg_image)
-    # bg_label = tk.Label(content_frame, image=bg_photo)
-    # bg_label.place(relwidth=1, relheight=1)
- 
+    
     try:
         image = Image.open('./image/tse.png')
     except:
@@ -62,7 +53,6 @@ def create_gui():
     pcd1 = None
     pcd2 = None
     step_value = tk.DoubleVar(value=0.05)
-    # grid_value = tk.DoubleVar(value=0.05)
     grid_value = tk.DoubleVar(value=1)
     last_loaded_file1 = None  
     last_loaded_file2 = None
@@ -93,9 +83,7 @@ def create_gui():
                 pcd.colors = o3d.utility.Vector3dVector(colors)
                 pcd1 = pcd
                 last_loaded_file1 = file_path  
-                # load_btn1.config(fg="green")  
                 file_name1.config(text=f"✅ {file_path.split('/')[-1]}")
-                # messagebox.showinfo("Success", "File 1 loaded successfully!")
 
 
                 point_count_label1 = tk.Label(file1_frame, text="Points",bg="#f5f5f5")
@@ -111,7 +99,6 @@ def create_gui():
                 progress_bar.grid_forget()
                 change_calculate_btn_state()
             except Exception as e:
-                # load_btn1.config(fg="red")  
                 messagebox.showerror("Error", f"Failed to load file: {e}")
                 progress_bar.grid_forget()
 
@@ -131,9 +118,7 @@ def create_gui():
                 pcd.colors = o3d.utility.Vector3dVector(colors)
                 pcd2 = pcd
                 last_loaded_file2 = file_path  
-                # load_btn2.config(fg="green",font=("bold"))
                 file_name2.config(text=f"✅ {file_path.split('/')[-1]}")  
-                # messagebox.showinfo("Success", "File 2 loaded successfully!")
 
                 point_count_label2 = tk.Label(file2_frame, text="Points",bg="#f5f5f5")
                 point_count_label2.grid(row=1, column=0, pady=1, padx=5, sticky='w')
@@ -148,7 +133,6 @@ def create_gui():
                 progress_bar.grid_forget()
                 change_calculate_btn_state()
             except Exception as e:
-                # load_btn2.config(fg="red",font=("bold")) 
                 messagebox.showerror("Error", f"Failed to load file: {e}")
                 progress_bar.grid_forget()
     
@@ -195,15 +179,11 @@ def create_gui():
     file2_label = tk.Label(file2_frame, text="File", bg="#F5F5F5")
     file2_label.grid(row=0, column=0, padx=5, pady=5, sticky='w')
     
-    # load_btn1 = tk.Button(root, text="📂 Load Time Series1", command=load_file1, width=20, height=2,background="lightblue")
     load_btn1 = ttk.Button(file1_frame, text="📄 Open File", command=load_file1, width=15) #Load Time Series 1
     load_btn1.grid(row=0, column=2 , pady=10, padx=10)
-    # load_btn1.pack()
 
-    # load_btn2 = tk.Button(file2_frame, text="📂 Load Time Series2", command=load_file2, width=20, height=2,background="lightblue")
     load_btn2 = ttk.Button(file2_frame, text="📄 Open File", command=load_file2, width=15) #Load Time Series 2
     load_btn2.grid(row=0, column=2, pady=10, padx=10)
-    # load_btn2.pack()
 
     calculator_frame = tk.LabelFrame(content_frame, text="Calculate Volume", bg="#F5F5F5")
     calculator_frame.grid(row=2, column=0, padx=10, pady=10, sticky="we")
@@ -216,15 +196,12 @@ def create_gui():
     file_name2.grid(row=0, column=1, pady=5, padx=5, sticky='w')
     
     visualize_and_align_frame = tk.LabelFrame(content_frame, text="Visualization & Align", bg="#F5F5F5")
-    # visualize_and_align_frame.grid(row=0, column=1, padx=10, pady=10)
     visualize_and_align_frame.grid(row=1, column=0, padx=10, pady=10, sticky="we")
 
     step_label = tk.Label(visualize_and_align_frame, text="Step value :", font=("Helvetica", 14), bg="#f5f5f5", fg="#0F2573")
-    # step_label.grid(row=3,column=0, columnspan=2, pady=10,sticky="w",padx=570)
     step_label.grid(row=0,column=0, padx=5, pady=5)
     
     step_entry = tk.Entry(visualize_and_align_frame, textvariable=step_value)
-    # step_entry.grid(row=4,column=0, columnspan=2, pady=10,sticky="w",padx=510)
     step_entry.grid(row=0,column=1, padx=5, pady=5)
     
     grid_size = tk.Label(calculator_frame, text="Grid size :", font=("Helvetica", 14), bg="#f5f5f5", fg="#0F2573")
@@ -237,16 +214,8 @@ def create_gui():
     progress_bar.grid(row=1, column=2, columnspan=2, padx=5, pady=5)
     progress_bar.grid_remove()  # ซ่อนไว้ก่อน
 
-    
-    # transfrom_label = tk.Label(root, text="Result Transformation Metric", font=("Helvetica", 16,"bold"), bg='#FFF9F0', fg="#0F2573")
-    # # transfrom_label.grid(row=8, column=0, columnspan=2, pady=0, padx=20)
-    # transfrom_label.pack()
-
-    # Start Visualize Time Series 1 and Time Series 2
     start_vis_source = ttk.Button(file1_frame, text="Visualize Original", command=lambda: visualize_a_point_cloud(pcd1, "Time Series1"), state='disabled')
     start_vis_target = ttk.Button(file2_frame, text="Visualize Original", command=lambda: visualize_a_point_cloud(pcd2, "Time Series2"), state='disabled')
-    # start_vis_source.grid(row=6,pady=10, padx=5)
-    # start_vis_target.grid(row=6,column=0, columnspan=2, pady=10)
     start_vis_source.grid(row=0, column=3, pady=10, padx=5)
     start_vis_target.grid(row=0, column=3, pady=10, padx=5)
 
@@ -254,12 +223,6 @@ def create_gui():
     start_viewer_btn.grid(row=1, column=1, pady=5, padx=5, sticky="we")
 
     progress_queue = queue.Queue()
-    # start_calculate_btn = ttk.Button(calculator_frame, text="🚀 Start Calculate", command=lambda:[
-    #         stop_animation.clear(),
-    #         threading.Thread(target=animate_gif, args=(canvas, dolphin_sequence, dolphin_id, stop_animation)).start(),
-    #         threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue, grid_value.get())).start(),
-    #         start_progress(stop_animation,progress_queue)
-    #     ])
     start_calculate_btn = ttk.Button(calculator_frame, text="🚀 Start Calculate", command=lambda:[
         stop_animation.clear(),
         threading.Thread(target=start_calculate, args=(pcd1, pcd2, progress_queue, grid_value.get())).start(),
@@ -270,18 +233,6 @@ def create_gui():
     man_btn = ttk.Button(visualize_and_align_frame, text="❔manual", command=show_man)
     man_btn.grid(row=2, column=1, pady=5, padx=5, sticky="we")
 
-    # squear = tk.Canvas(root, width=200, height=200, bg="black")
-    # squear.grid(row=9, column=0, columnspan=2, rowspan=5, pady=20, padx=5, sticky="n")
-    # squear.pack()
-    
-    # text_frame = tk.Label(root, text="Time Series1\n(ข้อมูลก่อนการเปลี่ยนแปลง)\n\nTime Series2\n(ข้อมูลหลังการเปลี่ยนแปลง)\n\nTime Series1 - Time Series2 = Volumn Change\n\nStart Calculate Volume \n(เริ่มต้นการคำนวณ)\n\nStep Value Normal = 0.05 \n(ใช้เมื่อไฟล์มีขนาด มากกว่าKB แต่น้อยกว่า10MB)\n",
-    #                       font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
-    # # text_frame.grid(row=9, pady=10, rowspan=5,padx=5)
-    # text_frame.pack()
-    # text_frame = tk.Label(root, text="    Start Visualization Time Series1    \n(ดูเฉพาะไฟล์ Time Series1)\n\n    Start Visualization Time Series2    \n(ดูเฉพาะไฟล์ Time Series2)\n\n  Start Visualize & Align  \n(ดูไฟล์ Time Series1 และ Time Series2)\n\n**ถ้าจะออกจากหน้านี้กด esc**", font=("Helvetica", 12,"bold"), bg="#F0C38E", fg="#0F2573")
-    # # text_frame.grid(row=9, rowspan=5,column=1, pady=10, padx=10)
-    # text_frame.pack()
-    
     history_data = []  # ลิสต์สำหรับเก็บประวัติการคำนวณ
 
     def show_history():
@@ -345,9 +296,6 @@ def create_gui():
         col_width = grid_size
         row_width = grid_size
         
-        #col_width = 0.1  
-        #row_width = 0.1 
-
         n_cols = math.ceil((gbl_x_max - gbl_x_min) / col_width)
         n_rows = math.ceil((gbl_y_max - gbl_y_min) / row_width)
 
@@ -582,14 +530,10 @@ def create_gui():
             if not progress_queue.empty():
                 percentage = progress_queue.get()
                 progress_bar['value'] = percentage
-                # percentage_label.config(text=f"{percentage}%")
-                # percentage_label.update()
             if not stop_animation.is_set():  
                 root.after(100, update_progress)  # อัปเดตทุก 100ms
             else:
-                # percentage_label.config(text="Completed!")
                 progress_bar["value"] = 100
-                # root.after(2000, lambda: progress_bar.grid_remove())
                 progress_bar.grid_remove()
 
         update_progress()
@@ -601,7 +545,6 @@ def create_gui():
     root.grid_columnconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
     
-    # canvas = tk.Canvas(root, width=70, height=70, bg='#f5f5f5')
     
     try:
         dolphin_gif = Image.open('./blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
@@ -611,11 +554,6 @@ def create_gui():
         ImageTk.PhotoImage(img.resize((50, 70), Image.Resampling.LANCZOS))
         for img in ImageSequence.Iterator(dolphin_gif)
     ]
-    # dolphin_id = canvas.create_image(25, 35, anchor="center", image=dolphin_sequence[0])
-    # canvas.place(relx=1.0, rely=1.0, anchor='se', x=-25, y=-30)
-    
-    # percentage_label = tk.Label(root, text="0%")
-    # percentage_label.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-10)
     
     stop_animation = threading.Event() 
 
