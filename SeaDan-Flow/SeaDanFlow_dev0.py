@@ -94,9 +94,20 @@ def create_gui():
                 pcd1 = pcd
                 last_loaded_file1 = file_path  
                 # load_btn1.config(fg="green")  
-                file_label1.config(text=f"✅ Loaded: {file_path.split('/')[-1]}")
-                messagebox.showinfo("Success", "File 1 loaded successfully!")
-                
+                file_name1.config(text=f"✅ {file_path.split('/')[-1]}")
+                # messagebox.showinfo("Success", "File 1 loaded successfully!")
+
+
+                point_count_label1 = tk.Label(file1_frame, text="Points",bg="#f5f5f5")
+                point_count_label1.grid(row=1, column=0, pady=1, padx=5, sticky='w')
+                point_count_value1 = tk.Label(file1_frame, text=f"{len(pcd1.points):,.0f}", bg='#f5f5f5')
+                point_count_value1.grid(row=1, column=1, pady=1, padx=5, sticky='w')
+
+                pcd1_size_label = tk.Label(file1_frame, text="Data size", bg='#f5f5f5')
+                pcd1_size_label.grid(row=2,column=0, padx=5, pady=1, sticky='w')
+                pcd1_size = tk.Label(file1_frame, text=f"{(points.nbytes+colors.nbytes+sys.getsizeof(pcd))/(1024 * 1024):,.4f} MB", bg='#f5f5f5') # points + pcd.colors + object overhead
+                pcd1_size.grid(row=2, column=1, padx=5, pady=1, sticky='w')
+
                 progress_bar.grid_forget()
                 change_calculate_btn_state()
             except Exception as e:
@@ -121,8 +132,19 @@ def create_gui():
                 pcd2 = pcd
                 last_loaded_file2 = file_path  
                 # load_btn2.config(fg="green",font=("bold"))
-                file_label2.config(text=f"✅ Loaded: {file_path.split('/')[-1]}")  
-                messagebox.showinfo("Success", "File 2 loaded successfully!")
+                file_name2.config(text=f"✅ {file_path.split('/')[-1]}")  
+                # messagebox.showinfo("Success", "File 2 loaded successfully!")
+
+                point_count_label2 = tk.Label(file2_frame, text="Points",bg="#f5f5f5")
+                point_count_label2.grid(row=1, column=0, pady=1, padx=5, sticky='w')
+                point_count_value2 = tk.Label(file2_frame, text=f"{len(pcd2.points):,.0f}", bg='#f5f5f5')
+                point_count_value2.grid(row=1, column=1, pady=1, padx=5, sticky='w')
+
+                pcd2_size_label = tk.Label(file2_frame, text="Data size", bg='#f5f5f5')
+                pcd2_size_label.grid(row=2,column=0, padx=5, pady=1, sticky='w')
+                pcd2_size = tk.Label(file2_frame, text=f"{(points.nbytes+colors.nbytes+sys.getsizeof(pcd))/(1024 * 1024):,.4f} MB", bg='#f5f5f5')
+                pcd2_size.grid(row=2, column=1, padx=5, pady=1, sticky='w')
+
                 progress_bar.grid_forget()
                 change_calculate_btn_state()
             except Exception as e:
@@ -166,26 +188,32 @@ def create_gui():
     file1_frame.grid(row=0, sticky='we')
     file2_frame = tk.LabelFrame(files_frame, text="Time Series2 / After", bg="#F5F5F5")
     file2_frame.grid(row=1, sticky="we")
+
+
+    file1_label = tk.Label(file1_frame, text="File", bg="#F5F5F5")
+    file1_label.grid(row=0, column=0, padx=5, pady=5, sticky='w')
+    file2_label = tk.Label(file2_frame, text="File", bg="#F5F5F5")
+    file2_label.grid(row=0, column=0, padx=5, pady=5, sticky='w')
+    
     # load_btn1 = tk.Button(root, text="📂 Load Time Series1", command=load_file1, width=20, height=2,background="lightblue")
     load_btn1 = ttk.Button(file1_frame, text="📄 Open File", command=load_file1, width=15) #Load Time Series 1
-    load_btn1.grid(row=0, column=1 , pady=10, padx=10)
+    load_btn1.grid(row=0, column=2 , pady=10, padx=10)
     # load_btn1.pack()
 
     # load_btn2 = tk.Button(file2_frame, text="📂 Load Time Series2", command=load_file2, width=20, height=2,background="lightblue")
     load_btn2 = ttk.Button(file2_frame, text="📄 Open File", command=load_file2, width=15) #Load Time Series 2
-    load_btn2.grid(row=0, column=1, pady=10, padx=10)
+    load_btn2.grid(row=0, column=2, pady=10, padx=10)
     # load_btn2.pack()
 
     calculator_frame = tk.LabelFrame(content_frame, text="Calculate Volume", bg="#F5F5F5")
     calculator_frame.grid(row=2, column=0, padx=10, pady=10, sticky="we")
     
-    progress_bar = ttk.Progressbar(calculator_frame, length=200, mode="determinate")
     
-    file_label1 = tk.Label(file1_frame, text="❌ No file loaded", fg="blue",bg="#f5f5f5")
-    file_label1.grid(row=0, column=0, pady=5, padx=5)
+    file_name1 = tk.Label(file1_frame, text="❌ No file loaded", fg="blue",bg="#f5f5f5")
+    file_name1.grid(row=0, column=1, pady=5, padx=5, sticky='w')
     
-    file_label2 = tk.Label(file2_frame, text="❌ No file loaded", fg="blue",bg="#f5f5f5")
-    file_label2.grid(row=0, column=0, pady=5, padx=5)
+    file_name2 = tk.Label(file2_frame, text="❌ No file loaded", fg="blue",bg="#f5f5f5")
+    file_name2.grid(row=0, column=1, pady=5, padx=5, sticky='w')
     
     visualize_and_align_frame = tk.LabelFrame(content_frame, text="Visualization & Align", bg="#F5F5F5")
     # visualize_and_align_frame.grid(row=0, column=1, padx=10, pady=10)
@@ -205,6 +233,7 @@ def create_gui():
     grid_entry = tk.Entry(calculator_frame, textvariable=grid_value)
     grid_entry.grid(row=0,column=1, padx=5, sticky='we')
 
+    progress_bar = ttk.Progressbar(calculator_frame, length=200, mode="determinate")
     progress_bar.grid(row=1, column=2, columnspan=2, padx=5, pady=5)
     progress_bar.grid_remove()  # ซ่อนไว้ก่อน
 
@@ -218,8 +247,8 @@ def create_gui():
     start_vis_target = ttk.Button(file2_frame, text="Visualize Original", command=lambda: visualize_a_point_cloud(pcd2, "Time Series2"), state='disabled')
     # start_vis_source.grid(row=6,pady=10, padx=5)
     # start_vis_target.grid(row=6,column=0, columnspan=2, pady=10)
-    start_vis_source.grid(row=0, column=2, pady=10, padx=5)
-    start_vis_target.grid(row=0, column=2, pady=10, padx=5)
+    start_vis_source.grid(row=0, column=3, pady=10, padx=5)
+    start_vis_target.grid(row=0, column=3, pady=10, padx=5)
 
     start_viewer_btn = ttk.Button(visualize_and_align_frame, state='disabled', text="Visualize & Align", command=lambda: start_viewer(pcd1, pcd2, step_value.get()))
     start_viewer_btn.grid(row=1, column=1, pady=5, padx=5, sticky="we")
@@ -432,10 +461,10 @@ def create_gui():
         view.grid(row=0, column=1, padx=5, pady=5, sticky='w')
         
         ts1 = ttk.Button(file1_frame, text="Heat Map",command=lambda:visualize_a_point_cloud_color(pcd1, "Time Series1",apply_cmap=True)) #Time Series 1
-        ts1.grid(row=0, column=3,padx=5)
+        ts1.grid(row=0, column=4,padx=5)
         
         ts2 = ttk.Button(file2_frame, text="Heat Map",command=lambda:visualize_a_point_cloud_color(pcd2, "Time Series2",apply_cmap=True)) #Time Series 2
-        ts2.grid(row=0, column=3,padx=5)
+        ts2.grid(row=0, column=4,padx=5)
         
         def view_all(pcd1, pcd2, threshold_min=-0.1, threshold_max=0.1):
                 try:
@@ -667,10 +696,6 @@ def draw_interactive(pcd1, pcd2, matrix1, matrix2, step):
 
     vis.run()
     vis.destroy_window()
-
-# def run_merge_cut_script():
-#     script_path = os.path.join(os.getcwd(), "automate_manage_mem.py")
-#     subprocess.run(["python", script_path])
 
 def run_merge_cut_script():
     # ดึง path ปัจจุบันของไฟล์ SeaDanFlow_dev0.py
