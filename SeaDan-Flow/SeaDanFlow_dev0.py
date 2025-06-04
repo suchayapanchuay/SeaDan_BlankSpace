@@ -19,7 +19,7 @@ import subprocess
 def create_gui():
     root = tk.Tk()
     root.title("SeaDan")
-    root.geometry("1000x600")
+    root.geometry("1000x650")
 
     header_frame = tk.Frame(root, bg="#ffffff", height=50)
     header_frame.pack(fill="x")
@@ -39,7 +39,12 @@ def create_gui():
     try:
         image = Image.open('./image/tse.png')
     except:
-        image = Image.open('./blankspace/image/tse.png')  
+        try:
+            image = Image.open('./blankspace/image/tse.png')
+        except:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            print(script_dir)
+            image = Image.open(script_dir.rstrip("SeaDan-Flow")+"image\\tse.png")
     image = image.resize((80, 40))  # ปรับขนาดรูปภาพ
     photo = ImageTk.PhotoImage(image)
     
@@ -52,6 +57,7 @@ def create_gui():
     
     pcd1 = None
     pcd2 = None
+    matrix2 = np.eye(4)
     step_value = tk.DoubleVar(value=0.05)
     grid_value = tk.DoubleVar(value=1)
     last_loaded_file1 = None  
@@ -233,6 +239,10 @@ def create_gui():
     man_btn = ttk.Button(visualize_and_align_frame, text="❔manual", command=show_man)
     man_btn.grid(row=2, column=1, pady=5, padx=5, sticky="we")
 
+    matrix_btn = ttk.Button(visualize_and_align_frame, text="📋 Show Matrix", command=lambda: show_matrix(np))
+    matrix_btn.grid(row=3, column=1, pady=5, padx=5, sticky="we")
+
+
     history_data = []  # ลิสต์สำหรับเก็บประวัติการคำนวณ
 
     def show_history():
@@ -250,18 +260,18 @@ def create_gui():
             history_text.insert(tk.END, f"{entry}\n\n")
         history_text.config(state=tk.DISABLED)
     
-    def animate_gif(canvas, gif_sequence, gif_id, stop_flag):
-        frame_index = 0
+    # def animate_gif(canvas, gif_sequence, gif_id, stop_flag):
+    #     frame_index = 0
 
-        def next_frame():
-            nonlocal frame_index
-            if stop_flag.is_set():  # ถ้าถูกตั้งค่าให้หยุด ออกจากแอนิเมชัน
-                return
-            frame_index = (frame_index + 1) % len(gif_sequence)
-            canvas.itemconfig(gif_id, image=gif_sequence[frame_index])
-            canvas.after(100, next_frame)
+    #     def next_frame():
+    #         nonlocal frame_index
+    #         if stop_flag.is_set():  # ถ้าถูกตั้งค่าให้หยุด ออกจากแอนิเมชัน
+    #             return
+    #         frame_index = (frame_index + 1) % len(gif_sequence)
+    #         canvas.itemconfig(gif_id, image=gif_sequence[frame_index])
+    #         canvas.after(100, next_frame)
 
-        next_frame()
+    #     next_frame()
         
     def start_calculate(src_pcd, target_pcd,progress_queue, grid_size=1.0):
         total_steps = 10
@@ -546,18 +556,22 @@ def create_gui():
     root.grid_columnconfigure(1, weight=1)
     
     
-    try:
-        dolphin_gif = Image.open('./blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
-    except:
-        dolphin_gif = Image.open('./image/gif2.gif')  # ใส่พาธ GIF ของคุณ
-    dolphin_sequence = [
-        ImageTk.PhotoImage(img.resize((50, 70), Image.Resampling.LANCZOS))
-        for img in ImageSequence.Iterator(dolphin_gif)
-    ]
+    # try:
+    #     dolphin_gif = Image.open('./blankspace/image/gif2.gif')  # ใส่พาธ GIF ของคุณ
+    # except:
+    #     dolphin_gif = Image.open('./image/gif2.gif')  # ใส่พาธ GIF ของคุณ
+    # dolphin_sequence = [
+    #     ImageTk.PhotoImage(img.resize((50, 70), Image.Resampling.LANCZOS))
+    #     for img in ImageSequence.Iterator(dolphin_gif)
+    # ]
     
     stop_animation = threading.Event() 
 
     root.mainloop()
+
+def show_matrix(matrix):
+    matrix_str = np.array2string(matrix, formatter={'float_kind': lambda x: f'{x:.2f}'})
+    messagebox.showinfo("Transformation Matrix", matrix_str)
 
 def visualize_a_point_cloud(pcd, title):
     try:
@@ -573,17 +587,16 @@ def visualize_a_point_cloud(pcd, title):
     except:
         messagebox.showwarning("Error", "กรุณาเลือกไฟล์ LAS ก่อน")
 
-
-
 def start_viewer(pcd1, pcd2, step):
     if pcd1 is not None and pcd2 is not None:
-        matrix1 = np.eye(4)
-        matrix2 = np.eye(4)
-        
-        translation_offset = np.array([-0.1,0.0,0.0])  
-        pcd1.translate(translation_offset)
-        
-        draw_interactive(pcd1, pcd2, matrix1, matrix2, step)
+        def run_viewer():
+            matrix1 = np.eye(4)
+            matrix2 = np.eye(4)
+            translation_offset = np.array([-0.1,0.0,0.0])  
+            pcd1.translate(translation_offset)
+            draw_interactive(pcd1, pcd2, matrix1, matrix2, step)
+        # threading.Thread(target=run_viewer, daemon=True).start
+        run_viewer()
     else:
         messagebox.showerror("Error", "Please load both files before starting the viewer.")
 
@@ -625,20 +638,20 @@ def show_man():
 
 def draw_interactive(pcd1, pcd2, matrix1, matrix2, step):
     vis = o3d.visualization.VisualizerWithKeyCallback()
-    vis.create_window()
-
-    vis.add_geometry(pcd1)
-    vis.add_geometry(pcd2)
-
-    key_callback_1(vis, pcd2, matrix2, step)
-
-    vis.run()
-    vis.destroy_window()
+    try:
+        vis.create_window()
+        vis.add_geometry(pcd1)
+        vis.add_geometry(pcd2)
+        key_callback_1(vis, pcd2, matrix2, step)
+        vis.run()
+    finally:
+        vis.destroy_window()
 
 def run_merge_cut_script():
     # ดึง path ปัจจุบันของไฟล์ SeaDanFlow_dev0.py
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    script_path = os.path.join(script_dir, "automate_manage_mem.py")
+    # script_path = os.path.join(script_dir, "automate_manage_mem.py")
+    script_path = os.path.join(script_dir, "merge_and_cut.py")   
 
     try:
         subprocess.Popen([sys.executable, script_path])

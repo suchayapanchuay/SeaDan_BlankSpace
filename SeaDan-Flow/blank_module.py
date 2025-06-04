@@ -105,6 +105,8 @@ def get_optimal_gridsize(src_pcd, tgt_pcd):
     return grid_size
 
 def calculate_grid_median_with_kdtree(points, x_min, y_min, col_width, row_width, n_rows, n_cols):
+    tqdm.monitor_interval = 0
+
     # Create a KD-tree for fast querying (only using x, y coordinates)
     kdtree = cKDTree(points[:, :2])  # Only use x, y for the KD-tree
     
